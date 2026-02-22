@@ -181,6 +181,7 @@ fun FeedTab() {
 fun FeedCard(photo: Photo) {
     var isLiked by remember(photo.id) { mutableStateOf(false) }
     var likeCount by remember(photo.id) { mutableStateOf((8..30).random()) }
+    val downloadImage = rememberImageDownloader()
 
     Card(
         modifier = Modifier
@@ -283,7 +284,7 @@ fun FeedCard(photo: Photo) {
                     Text("$likeCount", style = MaterialTheme.typography.caption.copy(fontWeight = FontWeight.Bold, color = if (isLiked) BrandPrimary else TextSecondary))
                 }
                 Spacer(Modifier.weight(1f))
-                IconDownload(TextSecondary, 24f)
+                IconDownload(TextSecondary, 24f, modifier = Modifier.clickable { photo.getPublicUrl()?.let { downloadImage(it) } })
             }
         }
     }

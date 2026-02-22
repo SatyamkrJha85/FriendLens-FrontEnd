@@ -232,6 +232,7 @@ class AlbumFeedScreen(val groupId: String) : Screen {
         val scope = rememberCoroutineScope()
         var isLiked by remember(photo.id) { mutableStateOf(false) }
         var likeCount by remember(photo.id) { mutableStateOf((5..20).random()) } // Stubbed like count
+        val downloadImage = rememberImageDownloader()
 
         Column(
             modifier = Modifier
@@ -308,7 +309,7 @@ class AlbumFeedScreen(val groupId: String) : Screen {
                     Text("$likeCount", style = MaterialTheme.typography.caption.copy(fontWeight = FontWeight.Bold, color = if (isLiked) BrandPrimary else TextSecondary))
                 }
                 Spacer(Modifier.weight(1f))
-                IconDownload(TextSecondary.copy(0.7f), 24f)
+                IconDownload(TextSecondary.copy(0.7f), 24f, modifier = Modifier.clickable { photo.getPublicUrl()?.let { downloadImage(it) } })
             }
         }
     }
