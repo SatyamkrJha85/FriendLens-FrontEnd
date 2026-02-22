@@ -10,3 +10,7 @@ build/
 iosApp/iosApp.xcworkspace/*
 iosApp/iosApp.xcodeproj/*
 !iosApp/iosApp.xcodeproj/project.pbxproj
+.gradle_home/
+.gemini/
+.temp_gradle/
+*.lck
