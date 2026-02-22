@@ -32,6 +32,7 @@ class CreateJoinGroupScreen : Screen {
         var joinCode by remember { mutableStateOf("") }
         var groupName by remember { mutableStateOf("") }
         var groupDesc by remember { mutableStateOf("") }
+        var groupImg by remember { mutableStateOf("") }
         var isLoading by remember { mutableStateOf(false) }
         var error by remember { mutableStateOf<String?>(null) }
         val scope = rememberCoroutineScope()
@@ -45,16 +46,17 @@ class CreateJoinGroupScreen : Screen {
         ) {
             // Header
             Column(modifier = Modifier.padding(24.dp)) {
-                Text("Group Space", style = MaterialTheme.typography.h1.copy(fontSize = 32.sp))
-                Text("Join friends or start a new collection.", style = MaterialTheme.typography.body2)
+                Text("Spaces", style = MaterialTheme.typography.h1.copy(fontSize = 36.sp, fontWeight = FontWeight.Black))
+                Text("Connect with friends and start a collection.", style = MaterialTheme.typography.body1.copy(color = TextSecondary))
             }
 
-            // Hero Image
+            // High-fidelity Hero with blur effect representation
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(200.dp)
-                    .padding(horizontal = 24.dp)
+                    .height(240.dp)
+                    .padding(horizontal = 20.dp)
+                    .shadow(16.dp, RoundedCornerShape(32.dp))
                     .clip(RoundedCornerShape(32.dp))
             ) {
                 Image(
@@ -63,42 +65,59 @@ class CreateJoinGroupScreen : Screen {
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop
                 )
-                Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.2f)))
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(0.5f))))
+                )
+                Column(
+                    modifier = Modifier.align(Alignment.BottomStart).padding(24.dp)
+                ) {
+                    Text("Adventure Awaits", color = Color.White, style = MaterialTheme.typography.h2)
+                    Text("Share every moment together.", color = Color.White.copy(0.8f), style = MaterialTheme.typography.caption)
+                }
             }
 
             Spacer(Modifier.height(32.dp))
 
-            // Join Section
+            // Join Section with improved aesthetics
             Card(
                 modifier = Modifier.padding(horizontal = 24.dp),
-                shape = RoundedCornerShape(24.dp),
+                shape = RoundedCornerShape(28.dp),
                 elevation = 0.dp,
-                border = BorderStroke(1.dp, DividerColor)
+                border = BorderStroke(1.dp, DividerColor),
+                backgroundColor = Color(0xFFF9FAFB)
             ) {
                 Column(modifier = Modifier.padding(24.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Surface(shape = CircleShape, color = Color(0xFFEFF6FF), modifier = Modifier.size(32.dp)) {
-                            Box(contentAlignment = Alignment.Center) { IconGroup(Color(0xFF3B82F6), 18f) }
-                        }
-                        Text("Join via Code", style = MaterialTheme.typography.h3, modifier = Modifier.padding(start = 12.dp))
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(Color(0xFFEFF6FF)),
+                            contentAlignment = Alignment.Center
+                        ) { IconGroup(Color(0xFF3B82F6), 22f) }
+                        Spacer(Modifier.width(16.dp))
+                        Text("Join with Code", style = MaterialTheme.typography.h3)
                     }
                     
-                    Spacer(Modifier.height(16.dp))
+                    Spacer(Modifier.height(20.dp))
                     
                     OutlinedTextField(
                         value = joinCode,
                         onValueChange = { if (it.length <= 6) joinCode = it.uppercase() },
                         modifier = Modifier.fillMaxWidth(),
-                        placeholder = { Text("6-digit code", style = MaterialTheme.typography.body1.copy(color = TextSecondary.copy(alpha = 0.5f))) },
+                        placeholder = { Text("6-digit access code", style = MaterialTheme.typography.body1.copy(color = TextSecondary.copy(0.4f))) },
                         shape = RoundedCornerShape(16.dp),
                         colors = TextFieldDefaults.outlinedTextFieldColors(
-                            unfocusedBorderColor = InputBorder,
-                            focusedBorderColor = BrandPrimary
+                            backgroundColor = Color.White,
+                            unfocusedBorderColor = Color.Transparent,
+                            focusedBorderColor = BrandPrimary.copy(0.3f)
                         ),
                         singleLine = true
                     )
                     
-                    Spacer(Modifier.height(16.dp))
+                    Spacer(Modifier.height(20.dp))
                     
                     Button(
                         onClick = {
@@ -109,6 +128,7 @@ class CreateJoinGroupScreen : Screen {
                                 try {
                                     val resp = FriendLensApi.joinGroup(JoinGroupRequest(joinCode))
                                     if (resp.status == "success") {
+                                        DataCache.clear() // Invalidate cache to see new group
                                         navigator.replaceAll(MainDashboardScreen()) 
                                     } else {
                                         error = resp.message
@@ -117,56 +137,76 @@ class CreateJoinGroupScreen : Screen {
                                 finally { isLoading = false }
                             }
                         },
-                        modifier = Modifier.fillMaxWidth().height(52.dp),
-                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth().height(56.dp).shadow(12.dp, RoundedCornerShape(16.dp)),
+                        shape = RoundedCornerShape(16.dp),
                         enabled = !isLoading && joinCode.length == 6
                     ) {
                         if (isLoading) CircularProgressIndicator(color = Color.White, modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
-                        else Text("Enter Group")
+                        else Text("Enter Shared Space", fontWeight = FontWeight.Bold)
                     }
                 }
             }
 
             Spacer(Modifier.height(24.dp))
 
-            // Create Section
+            // Create Section with more fields
             Card(
                 modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
-                shape = RoundedCornerShape(24.dp),
+                shape = RoundedCornerShape(28.dp),
                 elevation = 0.dp,
-                border = BorderStroke(1.dp, DividerColor)
+                border = BorderStroke(1.dp, DividerColor),
+                backgroundColor = Color.White
             ) {
                 Column(modifier = Modifier.padding(24.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Surface(shape = CircleShape, color = Color(0xFFF0FDF4), modifier = Modifier.size(32.dp)) {
-                            Box(contentAlignment = Alignment.Center) { IconPlus(Color(0xFF22C55E), 18f) }
-                        }
-                        Text("New Collection", style = MaterialTheme.typography.h3, modifier = Modifier.padding(start = 12.dp))
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(Color(0xFFF0FDF4)),
+                            contentAlignment = Alignment.Center
+                        ) { IconPlus(Color(0xFF22C55E), 22f) }
+                        Spacer(Modifier.width(16.dp))
+                        Text("Create New Vault", style = MaterialTheme.typography.h3)
                     }
                     
-                    Spacer(Modifier.height(16.dp))
+                    Spacer(Modifier.height(24.dp))
                     
+                    LabelStyle("ALBUM NAME")
                     OutlinedTextField(
                         value = groupName,
                         onValueChange = { groupName = it },
                         modifier = Modifier.fillMaxWidth(),
-                        placeholder = { Text("Group Name", style = MaterialTheme.typography.body1.copy(color = TextSecondary.copy(alpha = 0.5f))) },
-                        shape = RoundedCornerShape(16.dp),
-                        singleLine = true
-                    )
-                    
-                    Spacer(Modifier.height(12.dp))
-
-                    OutlinedTextField(
-                        value = groupDesc,
-                        onValueChange = { groupDesc = it },
-                        modifier = Modifier.fillMaxWidth(),
-                        placeholder = { Text("What's this album about?", style = MaterialTheme.typography.body1.copy(color = TextSecondary.copy(alpha = 0.5f))) },
+                        placeholder = { Text("E.g. Summer Trip 2024", style = MaterialTheme.typography.body1.copy(color = TextSecondary.copy(0.4f))) },
                         shape = RoundedCornerShape(16.dp),
                         singleLine = true
                     )
                     
                     Spacer(Modifier.height(16.dp))
+
+                    LabelStyle("DESCRIPTION (OPTIONAL)")
+                    OutlinedTextField(
+                        value = groupDesc,
+                        onValueChange = { groupDesc = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        placeholder = { Text("What is this for?", style = MaterialTheme.typography.body1.copy(color = TextSecondary.copy(0.4f))) },
+                        shape = RoundedCornerShape(16.dp),
+                        singleLine = true
+                    )
+
+                    Spacer(Modifier.height(16.dp))
+
+                    LabelStyle("COVER IMAGE URL")
+                    OutlinedTextField(
+                        value = groupImg,
+                        onValueChange = { groupImg = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        placeholder = { Text("https://image.path/to/cover.jpg", style = MaterialTheme.typography.body1.copy(color = TextSecondary.copy(0.4f))) },
+                        shape = RoundedCornerShape(16.dp),
+                        singleLine = true
+                    )
+                    
+                    Spacer(Modifier.height(24.dp))
                     
                     Button(
                         onClick = {
@@ -175,8 +215,11 @@ class CreateJoinGroupScreen : Screen {
                             error = null
                             scope.launch {
                                 try {
-                                    val resp = FriendLensApi.createGroup(CreateGroupRequest(name = groupName, description = groupDesc))
+                                    // In a real app, we'd need to update the backend to accept groupImg in createGroup
+                                    // For now we use the existing API call
+                                    val resp = FriendLensApi.createGroup(CreateGroupRequest(name = groupName, description = groupDesc, groupImg = groupImg))
                                     if (resp.status == "success") {
+                                        DataCache.clear() // Invalidate cache
                                         navigator.replaceAll(MainDashboardScreen())
                                     } else {
                                         error = resp.message
@@ -185,22 +228,35 @@ class CreateJoinGroupScreen : Screen {
                                 finally { isLoading = false }
                             }
                         },
-                        modifier = Modifier.fillMaxWidth().height(52.dp),
-                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth().height(56.dp).shadow(12.dp, RoundedCornerShape(16.dp)),
+                        shape = RoundedCornerShape(16.dp),
                         colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black),
                         enabled = !isLoading && groupName.isNotBlank()
                     ) {
                         if (isLoading) CircularProgressIndicator(color = Color.White, modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
-                        else Text("Create Album", color = Color.White)
+                        else Text("Launch Collection", color = Color.White, fontWeight = FontWeight.Bold)
                     }
                 }
             }
 
             if (error != null) {
-                Text(error!!, color = ErrorRed, modifier = Modifier.fillMaxWidth().padding(24.dp), textAlign = TextAlign.Center)
+                Text(error!!, color = ErrorRed, modifier = Modifier.fillMaxWidth().padding(24.dp), textAlign = TextAlign.Center, fontWeight = FontWeight.Bold)
             }
 
-            Spacer(Modifier.height(40.dp))
+            Spacer(Modifier.height(60.dp))
         }
+    }
+
+    @Composable
+    private fun LabelStyle(text: String) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.caption.copy(
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.sp,
+                color = TextSecondary.copy(0.6f)
+            ),
+            modifier = Modifier.padding(bottom = 8.dp, start = 4.dp)
+        )
     }
 }

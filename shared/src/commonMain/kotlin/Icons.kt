@@ -300,3 +300,16 @@ fun IconMore(color: Color, size: Float = 24f, modifier: Modifier = Modifier) {
         drawCircle(color, radius = r, center = Offset(s.width * 0.5f, s.height * 0.75f))
     }
 }
+@Composable
+fun IconChevronRight(color: Color, size: Float = 24f, modifier: Modifier = Modifier) {
+    Canvas(modifier = modifier.size(size.dp)) {
+        val s = this.size
+        val stroke = Stroke(width = s.width * 0.1f, cap = StrokeCap.Round, join = StrokeJoin.Round)
+        val path = Path().apply {
+            moveTo(s.width * 0.35f, s.height * 0.15f)
+            lineTo(s.width * 0.7f, s.height * 0.5f)
+            lineTo(s.width * 0.35f, s.height * 0.85f)
+        }
+        drawPath(path, color, style = stroke)
+    }
+}

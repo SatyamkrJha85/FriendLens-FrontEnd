@@ -107,7 +107,7 @@ class OnboardingScreen : Screen {
                 contentAlignment = Alignment.Center
             ) {
                 // Background glow
-                Box(Modifier.size(240.dp).background(BrandPrimary.copy(alpha = 0.1f), CircleShape).padding(20.dp))
+                Box(Modifier.size(240.dp).background(BrandPrimary.copy(0.1f), CircleShape).padding(20.dp))
                 
                 Surface(
                     modifier = Modifier.fillMaxSize().shadow(24.dp, RoundedCornerShape(32.dp)),
@@ -134,7 +134,7 @@ class OnboardingScreen : Screen {
             ) {
                 Surface(
                     shape = CircleShape,
-                    color = BrandPrimary.copy(alpha = 0.1f),
+                    color = BrandPrimary.copy(0.1f),
                     modifier = Modifier.padding(bottom = 16.dp)
                 ) {
                     Text(

@@ -48,7 +48,7 @@ class LoginScreen : Screen {
                 modifier = Modifier
                     .offset(x = (-40).dp, y = (-40).dp)
                     .size(256.dp)
-                    .background(BrandPrimary.copy(alpha = 0.1f), CircleShape)
+                    .background(BrandPrimary.copy(0.1f), CircleShape)
             )
 
             Column(
@@ -198,7 +198,7 @@ class LoginScreen : Screen {
                 value = value,
                 onValueChange = onValueChange,
                 modifier = Modifier.fillMaxWidth(),
-                placeholder = { Text(placeholder, style = MaterialTheme.typography.body1.copy(color = TextSecondary.copy(alpha = 0.5f))) },
+                placeholder = { Text(placeholder, style = MaterialTheme.typography.body1.copy(color = TextSecondary.copy(0.5f))) },
                 leadingIcon = { Box(modifier = Modifier.padding(start = 12.dp)) { icon() } },
                 shape = MaterialTheme.shapes.medium,
                 singleLine = true,
@@ -310,7 +310,7 @@ class SignupScreen : Screen {
                 value = value,
                 onValueChange = onValueChange,
                 modifier = Modifier.fillMaxWidth(),
-                placeholder = { Text(placeholder, style = MaterialTheme.typography.body1.copy(color = TextSecondary.copy(alpha = 0.5f))) },
+                placeholder = { Text(placeholder, style = MaterialTheme.typography.body1.copy(color = TextSecondary.copy(0.5f))) },
                 leadingIcon = { Box(modifier = Modifier.padding(start = 12.dp)) { icon() } },
                 shape = MaterialTheme.shapes.medium,
                 singleLine = true,

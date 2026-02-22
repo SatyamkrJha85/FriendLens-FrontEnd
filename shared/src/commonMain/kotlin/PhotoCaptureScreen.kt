@@ -36,12 +36,12 @@ class PhotoCaptureScreen : Screen {
                     .fillMaxSize()
                     .background(
                         brush = Brush.verticalGradient(
-                            listOf(Color(0xFF0F172A).copy(alpha = 0.8f), Color(0xFF000000))
+                            listOf(Color(0xFF0F172A).copy(0.8f), Color(0xFF000000))
                         )
                     ),
                 contentAlignment = Alignment.Center
             ) {
-                IconCamera(Color.White.copy(alpha = 0.1f), 140f)
+                IconCamera(Color.White.copy(0.1f), 140f)
             }
 
             // Controls Overlay
@@ -54,7 +54,7 @@ class PhotoCaptureScreen : Screen {
                 ) {
                     Surface(
                         shape = CircleShape,
-                        color = Color.White.copy(alpha = 0.1f),
+                        color = Color.White.copy(0.1f),
                         modifier = Modifier.size(44.dp).clickable { navigator.pop() }
                     ) {
                         Box(contentAlignment = Alignment.Center) { IconClose(Color.White, 20f) }
@@ -62,7 +62,7 @@ class PhotoCaptureScreen : Screen {
                     
                     Surface(
                         shape = RoundedCornerShape(20.dp),
-                        color = Color.White.copy(alpha = 0.1f),
+                        color = Color.White.copy(0.1f),
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                     ) {
                         Text("MOMENT ALBUM", style = MaterialTheme.typography.caption.copy(color = Color.White, letterSpacing = 2.sp))
@@ -70,7 +70,7 @@ class PhotoCaptureScreen : Screen {
 
                     Surface(
                         shape = CircleShape,
-                        color = Color.White.copy(alpha = 0.1f),
+                        color = Color.White.copy(0.1f),
                         modifier = Modifier.size(44.dp)
                     ) {
                         Box(contentAlignment = Alignment.Center) { IconFlash(WarningAmber, 20f) }
@@ -84,7 +84,7 @@ class PhotoCaptureScreen : Screen {
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp))
-                        .background(Color.Black.copy(alpha = 0.5f))
+                        .background(Color.Black.copy(0.5f))
                         .padding(bottom = 60.dp, top = 24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
@@ -92,13 +92,13 @@ class PhotoCaptureScreen : Screen {
                     Row(
                         modifier = Modifier
                             .clip(CircleShape)
-                            .background(Color.White.copy(alpha = 0.1f))
+                            .background(Color.White.copy(0.1f))
                             .padding(horizontal = 16.dp, vertical = 8.dp),
                         horizontalArrangement = Arrangement.spacedBy(24.dp)
                     ) {
-                        Text("0.5", color = Color.White.copy(alpha = 0.5f), fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        Text("0.5", color = Color.White.copy(0.5f), fontWeight = FontWeight.Bold, fontSize = 12.sp)
                         Text("1x", color = ActiveZoom, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                        Text("3x", color = Color.White.copy(alpha = 0.5f), fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        Text("3x", color = Color.White.copy(0.5f), fontWeight = FontWeight.Bold, fontSize = 12.sp)
                     }
 
                     Spacer(modifier = Modifier.height(40.dp))
@@ -114,7 +114,7 @@ class PhotoCaptureScreen : Screen {
                             modifier = Modifier
                                 .size(50.dp)
                                 .clip(RoundedCornerShape(12.dp))
-                                .border(2.dp, Color.White.copy(alpha = 0.3f), RoundedCornerShape(12.dp))
+                                .border(2.dp, Color.White.copy(0.3f), RoundedCornerShape(12.dp))
                         ) {
                             Image(
                                 painter = painterResource("drawable/photo_sample.png"),
@@ -141,7 +141,7 @@ class PhotoCaptureScreen : Screen {
                         // Flip Cam
                         Surface(
                             shape = CircleShape,
-                            color = Color.White.copy(alpha = 0.1f),
+                            color = Color.White.copy(0.1f),
                             modifier = Modifier.size(50.dp)
                         ) {
                             Box(contentAlignment = Alignment.Center) { IconFlip(Color.White, 24f) }
@@ -161,7 +161,7 @@ class PhotoCaptureScreen : Screen {
                                 text = mode,
                                 modifier = Modifier.clickable { selectedMode = mode },
                                 style = MaterialTheme.typography.caption.copy(
-                                    color = if (isActive) BrandPrimary else Color.White.copy(alpha = 0.5f),
+                                    color = if (isActive) BrandPrimary else Color.White.copy(0.5f),
                                     fontWeight = if (isActive) FontWeight.Bold else FontWeight.Medium,
                                     letterSpacing = 1.sp
                                 )

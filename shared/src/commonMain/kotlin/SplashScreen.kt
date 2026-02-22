@@ -73,7 +73,7 @@ class SplashScreen : Screen {
                     .size(400.dp)
                     .background(
                         brush = Brush.radialGradient(
-                            listOf(BrandPrimary.copy(alpha = 0.05f), Color.Transparent)
+                            listOf(BrandPrimary.copy(0.05f), Color.Transparent)
                         )
                     )
             )

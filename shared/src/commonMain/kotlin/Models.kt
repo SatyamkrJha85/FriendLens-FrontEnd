@@ -71,13 +71,15 @@ data class Group(
     val name: String,
     val description: String? = null,
     val joinCode: String,
-    val createdAt: String? = null
+    val createdAt: String? = null,
+    val groupImg: String? = null
 )
 
 @Serializable
 data class CreateGroupRequest(
     val name: String,
-    val description: String
+    val description: String,
+    val groupImg: String? = null
 )
 
 @Serializable
