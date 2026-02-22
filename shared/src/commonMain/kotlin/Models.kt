@@ -10,6 +10,37 @@ data class SessionState(
     val isLoggedIn: Boolean = false
 )
 
+@Serializable
+data class LoginRequest(
+    val email: String,
+    val password: String
+)
+
+@Serializable
+data class SignupRequest(
+    val email: String,
+    val password: String,
+    val data: Map<String, String>? = null
+)
+
+@Serializable
+data class AuthResponse(
+    val access_token: String? = null,
+    val token_type: String? = null,
+    val expires_in: Int? = null,
+    val user: SupabaseUser? = null,
+    val msg: String? = null,
+    val error: String? = null,
+    val error_description: String? = null
+)
+
+@Serializable
+data class SupabaseUser(
+    val id: String,
+    val email: String? = null,
+    val user_metadata: Map<String, String>? = null
+)
+
 // ─── User API ───
 @Serializable
 data class UserResponse(

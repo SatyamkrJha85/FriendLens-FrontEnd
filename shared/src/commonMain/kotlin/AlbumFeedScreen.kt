@@ -11,6 +11,7 @@ import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
@@ -25,26 +26,50 @@ import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
 
 class AlbumFeedScreen : Screen {
-    @OptIn(ExperimentalResourceApi::class)
     @Composable
     override fun Content() {
-        var selectedGroupId by remember { mutableStateOf<String?>(null) }
+        ContentWithId(null)
+    }
+
+    @OptIn(ExperimentalResourceApi::class)
+    @Composable
+    fun ContentWithId(initialGroupId: String?) {
+        var selectedGroupId by remember { mutableStateOf<String?>(initialGroupId) }
         var groups by remember { mutableStateOf<List<Group>>(emptyList()) }
         var photos by remember { mutableStateOf<List<Photo>>(emptyList()) }
         var isLoading by remember { mutableStateOf(true) }
         val scope = rememberCoroutineScope()
 
         LaunchedEffect(Unit) {
-            try { val resp = FriendLensApi.getAllGroups(); if (resp.status == "success") { groups = resp.groups; if (groups.isNotEmpty()) selectedGroupId = groups.first().id } } catch (_: Exception) {}
+            try { 
+                val resp = FriendLensApi.getAllGroups()
+                if (resp.status == "success") { 
+                    groups = resp.groups
+                    if (selectedGroupId == null && groups.isNotEmpty()) {
+                        selectedGroupId = groups.first().id 
+                    }
+                } 
+            } catch (_: Exception) {}
             isLoading = false
         }
 
+        LaunchedEffect(initialGroupId) {
+            if (initialGroupId != null) {
+                selectedGroupId = initialGroupId
+            }
+        }
+
         LaunchedEffect(selectedGroupId) {
-            selectedGroupId?.let { gid -> try { val resp = FriendLensApi.getGroupPhotos(gid); if (resp.status == "success") photos = resp.photos } catch (_: Exception) {} }
+            selectedGroupId?.let { gid -> 
+                try { 
+                    val resp = FriendLensApi.getGroupPhotos(gid)
+                    if (resp.status == "success") photos = resp.photos 
+                } catch (_: Exception) {} 
+            }
         }
 
         LazyColumn(modifier = Modifier.fillMaxSize().background(BackgroundLight), contentPadding = PaddingValues(bottom = 100.dp)) {
-            // Active group banner — brand gradient
+            // Active group banner
             item {
                 val activeGroup = groups.find { it.id == selectedGroupId }
                 Box(
@@ -157,7 +182,7 @@ fun FeedPost(groupId: String, photoId: String, title: String, author: String, da
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(Modifier.size(40.dp).clip(CircleShape).background(BrandBlue.copy(alpha = 0.15f)), contentAlignment = Alignment.Center) {
-                    Text(title.take(1), fontWeight = FontWeight.Bold, color = BrandBlue)
+                    Text(title.take(1).uppercase(), fontWeight = FontWeight.Bold, color = BrandBlue)
                 }
                 Spacer(Modifier.width(12.dp))
                 Column {
@@ -184,7 +209,7 @@ fun FeedPost(groupId: String, photoId: String, title: String, author: String, da
                     modifier = Modifier.clickable {
                         scope.launch {
                             try {
-                                if (isLiked) { if (groupId.isNotEmpty()) FriendLensApi.unlikePhoto(groupId, photoId); likeCount-- }
+                                if (isLiked) { if (groupId.isNotEmpty()) FriendLensApi.unlikePhoto(groupId, photoId); if(likeCount > 0) likeCount-- }
                                 else { if (groupId.isNotEmpty()) FriendLensApi.likePhoto(groupId, photoId); likeCount++ }
                                 isLiked = !isLiked
                             } catch (_: Exception) { isLiked = !isLiked }

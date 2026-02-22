@@ -1,3 +1,4 @@
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -13,18 +14,22 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.ExperimentalResourceApi
 
 class MainDashboardScreen : Screen {
     @Composable
     override fun Content() {
         var selectedTab by remember { mutableStateOf(0) }
+        var activeGroupId by remember { mutableStateOf<String?>(null) }
         val navigator = LocalNavigator.currentOrThrow
 
         Scaffold(
@@ -38,7 +43,7 @@ class MainDashboardScreen : Screen {
                         NavItem(icon = { IconHome(if (selectedTab == 0) BrandBlue else TextSecondary, 22f) }, label = "Home", selected = selectedTab == 0) { selectedTab = 0 }
                         NavItem(icon = { IconAlbum(if (selectedTab == 1) BrandPurple else TextSecondary, 22f) }, label = "Albums", selected = selectedTab == 1) { selectedTab = 1 }
 
-                        // Center FAB — gradient matching icon ring
+                        // Center FAB
                         Box(
                             modifier = Modifier.size(56.dp).shadow(12.dp, CircleShape).clip(CircleShape)
                                 .background(brush = Brush.sweepGradient(listOf(BrandBlue, BrandPurple, BrandPink, BrandCoral, BrandOrange, BrandBlue)))
@@ -54,9 +59,9 @@ class MainDashboardScreen : Screen {
         ) { padding ->
             Box(modifier = Modifier.fillMaxSize().padding(padding).background(BackgroundLight)) {
                 when (selectedTab) {
-                    0 -> HomeTab()
-                    1 -> AlbumsTab()
-                    2 -> GroupsTab()
+                    0 -> HomeTab(onGroupClick = { gid -> activeGroupId = gid; selectedTab = 1 })
+                    1 -> AlbumFeedScreen().ContentWithId(activeGroupId)
+                    2 -> CreateJoinGroupScreen().Content()
                     3 -> ProfileTab()
                 }
             }
@@ -76,32 +81,25 @@ fun NavItem(icon: @Composable () -> Unit, label: String, selected: Boolean, onCl
     }
 }
 
+@OptIn(ExperimentalResourceApi::class)
 @Composable
-fun HomeTab() {
+fun HomeTab(onGroupClick: (String) -> Unit) {
     var groups by remember { mutableStateOf<List<Group>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
 
     LaunchedEffect(Unit) {
-        sendLocalNotification("New moments await!", "Your friends uploaded new photos.")
         try { val resp = FriendLensApi.getAllGroups(); if (resp.status == "success") groups = resp.groups } catch (_: Exception) {}
         isLoading = false
     }
 
     LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(24.dp)) {
         item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Column {
                     Text("Your Albums", fontSize = 32.sp, fontWeight = FontWeight.Bold, color = TextDark)
                     Text("${groups.size} collections · One place", fontSize = 14.sp, color = TextSecondary)
                 }
-                Box(
-                    modifier = Modifier.size(48.dp).clip(RoundedCornerShape(16.dp)).background(CardBackground).clickable { },
-                    contentAlignment = Alignment.Center
-                ) { IconBell(TextDark, 22f) }
+                Box(modifier = Modifier.size(48.dp).clip(RoundedCornerShape(16.dp)).background(CardBackground).clickable { }, contentAlignment = Alignment.Center) { IconBell(TextDark, 22f) }
             }
             Spacer(modifier = Modifier.height(24.dp))
         }
@@ -124,13 +122,10 @@ fun HomeTab() {
             Spacer(modifier = Modifier.height(16.dp))
         }
 
-        // Favorite Cards with gradient from icon
         item {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                FavoriteCard(Modifier.weight(1f), "Summer Festival", "18 photos",
-                    listOf(Color(0xFFEBF4FF), Color(0xFFDBEAFE))) { IconCamera(BrandBlue, 28f) }
-                FavoriteCard(Modifier.weight(1f), "Japan Trip", "450 photos",
-                    listOf(Color(0xFFF5F3FF), Color(0xFFEDE9FE))) { IconAlbum(BrandPurple, 28f) }
+                FavoriteCard(Modifier.weight(1f), "Summer Festival", "18 photos", listOf(Color(0xFFEBF4FF), Color(0xFFDBEAFE))) { IconCamera(BrandBlue, 28f) }
+                FavoriteCard(Modifier.weight(1f), "Japan Trip", "450 photos", listOf(Color(0xFFF5F3FF), Color(0xFFEDE9FE))) { IconAlbum(BrandPurple, 28f) }
             }
             Spacer(modifier = Modifier.height(32.dp))
         }
@@ -144,38 +139,22 @@ fun HomeTab() {
             item { Box(Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = BrandBlue, strokeWidth = 3.dp) } }
         } else if (groups.isEmpty()) {
             item {
-                Column(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 40.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Image(
-                        painter = org.jetbrains.compose.resources.painterResource("drawable/empty_album.png"),
-                        contentDescription = "Empty",
-                        modifier = Modifier.size(160.dp),
-                        contentScale = ContentScale.Fit
-                    )
+                Column(modifier = Modifier.fillMaxWidth().padding(vertical = 40.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Image(painter = org.jetbrains.compose.resources.painterResource("drawable/empty_album.png"), contentDescription = "Empty", modifier = Modifier.size(160.dp), contentScale = ContentScale.Fit)
                     Spacer(Modifier.height(16.dp))
                     Text("No collections yet", fontWeight = FontWeight.Bold, color = TextDark, fontSize = 18.sp)
                     Text("Start by joining your friends or\ncreating a new album.", color = TextSecondary, fontSize = 14.sp, textAlign = TextAlign.Center)
                 }
             }
         } else {
-            items(groups) { group -> CollectionCard(group.name, group.joinCode, "") { IconCamera(BrandBlue, 22f) } }
+            items(groups) { group -> CollectionCard(group.name, group.joinCode, "", onClick = { onGroupClick(group.id) }) { IconCamera(BrandBlue, 22f) } }
         }
     }
 }
 
 @Composable
-fun AlbumsTab() { AlbumFeedScreen().Content() }
-@Composable
-fun GroupsTab() { CreateJoinGroupScreen().Content() }
-
-@Composable
 fun FavoriteCard(modifier: Modifier = Modifier, title: String, count: String, gradient: List<Color>, iconComposable: @Composable () -> Unit) {
-    Box(
-        modifier = modifier.height(150.dp).shadow(4.dp, RoundedCornerShape(20.dp)).clip(RoundedCornerShape(20.dp))
-            .background(brush = Brush.verticalGradient(gradient)).padding(20.dp)
-    ) {
+    Box(modifier = modifier.height(150.dp).shadow(4.dp, RoundedCornerShape(20.dp)).clip(RoundedCornerShape(20.dp)).background(brush = Brush.verticalGradient(gradient)).padding(20.dp)) {
         Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.SpaceBetween) {
             iconComposable()
             Column {
@@ -187,10 +166,9 @@ fun FavoriteCard(modifier: Modifier = Modifier, title: String, count: String, gr
 }
 
 @Composable
-fun CollectionCard(title: String, code: String, count: String, iconComposable: @Composable () -> Unit) {
+fun CollectionCard(title: String, code: String, count: String, onClick: () -> Unit = {}, iconComposable: @Composable () -> Unit) {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp).shadow(2.dp, RoundedCornerShape(16.dp))
-            .clip(RoundedCornerShape(16.dp)).background(Color.White).padding(16.dp),
+        modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp).shadow(2.dp, RoundedCornerShape(16.dp)).clip(RoundedCornerShape(16.dp)).background(Color.White).clickable(onClick = onClick).padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(Modifier.size(48.dp).clip(RoundedCornerShape(14.dp)).background(CardBackground), contentAlignment = Alignment.Center) { iconComposable() }
