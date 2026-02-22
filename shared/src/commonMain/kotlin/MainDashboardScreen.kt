@@ -31,29 +31,24 @@ import androidx.compose.foundation.BorderStroke
 class MainDashboardScreen : Screen {
     @Composable
     override fun Content() {
-        var selectedTab by remember { mutableStateOf(1) } // Default to Albums based on mockup
-        var activeGroupId by remember { mutableStateOf<String?>(null) }
+        var selectedTab by remember { mutableStateOf(0) }
         val navigator = LocalNavigator.currentOrThrow
 
         Scaffold(
             bottomBar = {
                 Surface(
-                    elevation = 8.dp,
+                    elevation = 16.dp,
                     color = Color.White,
                     border = BorderStroke(0.5.dp, DividerColor)
                 ) {
                     Row(
-                        modifier = Modifier.fillMaxWidth().height(80.dp).padding(vertical = 8.dp),
+                        modifier = Modifier.fillMaxWidth().height(80.dp).padding(bottom = 8.dp),
                         horizontalArrangement = Arrangement.SpaceAround,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        NavItem(icon = { IconHome(if (selectedTab == 0) BrandPrimary else TextSecondary, 24f) }, label = "Home", selected = selectedTab == 0) { selectedTab = 0 }
+                        NavItem(icon = { IconHome(if (selectedTab == 0) BrandPrimary else TextSecondary, 24f) }, label = "Feed", selected = selectedTab == 0) { selectedTab = 0 }
                         NavItem(icon = { IconAlbum(if (selectedTab == 1) BrandPrimary else TextSecondary, 24f) }, label = "Albums", selected = selectedTab == 1) { selectedTab = 1 }
-
-                        // Placeholder for the gap in the bottom nav
-                        Box(modifier = Modifier.weight(0.5f))
-
-                        NavItem(icon = { IconGroup(if (selectedTab == 2) BrandPrimary else TextSecondary, 24f) }, label = "Friends", selected = selectedTab == 2) { selectedTab = 2 }
+                        NavItem(icon = { IconGroup(if (selectedTab == 2) BrandPrimary else TextSecondary, 24f) }, label = "Join", selected = selectedTab == 2) { selectedTab = 2 }
                         NavItem(icon = { IconProfile(if (selectedTab == 3) BrandPrimary else TextSecondary, 24f) }, label = "Profile", selected = selectedTab == 3) { selectedTab = 3 }
                     }
                 }
@@ -63,16 +58,18 @@ class MainDashboardScreen : Screen {
                     onClick = { navigator.push(PhotoCaptureScreen()) },
                     backgroundColor = BrandPrimary,
                     contentColor = Color.White,
-                    modifier = Modifier.padding(bottom = 16.dp).size(56.dp).shadow(12.dp, CircleShape)
+                    modifier = Modifier.size(56.dp).shadow(12.dp, CircleShape)
                 ) {
                     IconPlus(Color.White, 32f)
                 }
-            }
+            },
+            floatingActionButtonPosition = FabPosition.Center,
+            isFloatingActionButtonDocked = true
         ) { padding ->
             Box(modifier = Modifier.fillMaxSize().padding(padding).background(BackgroundLight)) {
                 when (selectedTab) {
-                    0 -> HomeTab(onGroupClick = { gid -> activeGroupId = gid; selectedTab = 1 })
-                    1 -> HomeTab(onGroupClick = { gid -> activeGroupId = gid; selectedTab = 1 }) // Albums view same as home for now
+                    0 -> FeedTab()
+                    1 -> AlbumsTab(onGroupClick = { gid -> navigator.push(AlbumFeedScreen(gid)) })
                     2 -> CreateJoinGroupScreen().Content()
                     3 -> ProfileTab()
                 }
@@ -84,7 +81,7 @@ class MainDashboardScreen : Screen {
 @Composable
 fun NavItem(icon: @Composable () -> Unit, label: String, selected: Boolean, onClick: () -> Unit) {
     Column(
-        modifier = Modifier.clickable(onClick = onClick).padding(horizontal = 8.dp).width(64.dp),
+        modifier = Modifier.clickable(onClick = onClick).padding(horizontal = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
@@ -94,7 +91,7 @@ fun NavItem(icon: @Composable () -> Unit, label: String, selected: Boolean, onCl
             text = label,
             style = MaterialTheme.typography.caption.copy(
                 color = if (selected) BrandPrimary else TextSecondary,
-                fontSize = 10.sp,
+                fontSize = 11.sp,
                 fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium
             )
         )
@@ -103,7 +100,98 @@ fun NavItem(icon: @Composable () -> Unit, label: String, selected: Boolean, onCl
 
 @OptIn(ExperimentalResourceApi::class)
 @Composable
-fun HomeTab(onGroupClick: (String) -> Unit) {
+fun FeedTab() {
+    var allPhotos by remember { mutableStateOf<List<Photo>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(true) }
+
+    LaunchedEffect(Unit) {
+        try {
+            val groupsResp = FriendLensApi.getAllGroups()
+            if (groupsResp.status == "success") {
+                val photos = mutableListOf<Photo>()
+                // Fetch photos from the first 5 groups to build a feed
+                groupsResp.groups.take(5).forEach { group ->
+                    val pResp = FriendLensApi.getGroupPhotos(group.id)
+                    photos.addAll(pResp.photos)
+                }
+                allPhotos = photos.sortedByDescending { it.uploadedAt }
+            }
+        } catch (_: Exception) {}
+        isLoading = false
+    }
+
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(bottom = 100.dp)
+    ) {
+        item {
+            Column(modifier = Modifier.fillMaxWidth().background(Color.White).padding(horizontal = 24.dp, vertical = 20.dp)) {
+                Text("Recent Activity", style = MaterialTheme.typography.h1.copy(fontSize = 28.sp))
+                Text("See what your friends are capturing.", style = MaterialTheme.typography.body2)
+            }
+        }
+
+        if (isLoading) {
+            item { Box(Modifier.fillMaxWidth().padding(40.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = BrandPrimary) } }
+        } else if (allPhotos.isEmpty()) {
+            item {
+                Column(modifier = Modifier.fillMaxWidth().padding(60.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Image(painter = painterResource("drawable/onboarding_capture.png"), contentDescription = null, modifier = Modifier.size(160.dp))
+                    Spacer(Modifier.height(16.dp))
+                    Text("Your feed is empty", style = MaterialTheme.typography.h3)
+                    Text("Join a group to see moments!", textAlign = TextAlign.Center)
+                }
+            }
+        } else {
+            items(allPhotos) { photo ->
+                FeedCard(photo)
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalResourceApi::class)
+@Composable
+fun FeedCard(photo: Photo) {
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+        shape = RoundedCornerShape(20.dp),
+        elevation = 2.dp
+    ) {
+        Column {
+            Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.size(32.dp).clip(CircleShape).background(Color(0xFFE2E8F0)), contentAlignment = Alignment.Center) {
+                    Text((photo.uploadedByUsername ?: "U").take(1).uppercase(), fontWeight = FontWeight.Bold, color = TextPrimary)
+                }
+                Spacer(Modifier.width(12.dp))
+                Column {
+                    Text(photo.uploadedByUsername ?: "Anonymous", style = MaterialTheme.typography.body2.copy(fontWeight = FontWeight.Bold, color = TextPrimary))
+                    Text(photo.uploadedAt?.split("T")?.get(0) ?: "Just now", style = MaterialTheme.typography.caption.copy(fontSize = 10.sp))
+                }
+            }
+            Box(modifier = Modifier.fillMaxWidth().height(240.dp)) {
+                Image(
+                    painter = painterResource("drawable/onboarding_capture.png"), // Placeholder if s3Key is not supported yet by painterResource
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+                // In a real app, we'd use an Image Loader for photo.originalUrl
+            }
+            Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                IconHeart(BrandPrimary, filled = true, size = 20f)
+                Spacer(Modifier.width(16.dp))
+                IconComment(TextSecondary, 20f)
+                Spacer(Modifier.weight(1f))
+                IconShare(TextSecondary, 20f)
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalResourceApi::class)
+@Composable
+fun AlbumsTab(onGroupClick: (String) -> Unit) {
     var groups by remember { mutableStateOf<List<Group>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     var searchText by remember { mutableStateOf("") }
@@ -120,35 +208,18 @@ fun HomeTab(onGroupClick: (String) -> Unit) {
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(bottom = 100.dp)
     ) {
-        // Sticky Header from Stitch Design
         item {
             Column(modifier = Modifier.fillMaxWidth().background(Color.White).padding(horizontal = 24.dp, vertical = 20.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Text("Your Albums", style = MaterialTheme.typography.h1.copy(fontSize = 28.sp))
-                        Text("All moments. One place.", style = MaterialTheme.typography.body2)
-                    }
-                    Surface(
-                        shape = CircleShape,
-                        color = Color(0xFFF3F4F6),
-                        modifier = Modifier.size(44.dp).clickable { },
-                    ) {
-                        Box(contentAlignment = Alignment.Center) { IconBell(TextPrimary, 20f) }
-                    }
-                }
+                Text("Your Albums", style = MaterialTheme.typography.h1.copy(fontSize = 28.sp))
+                Text("Collections of shared memories.", style = MaterialTheme.typography.body2)
                 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(20.dp))
 
-                // Search Bar - rounded pill, no border
                 OutlinedTextField(
                     value = searchText,
                     onValueChange = { searchText = it },
                     modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("Search albums or friends...", style = MaterialTheme.typography.body2.copy(color = TextSecondary.copy(alpha = 0.6f))) },
+                    placeholder = { Text("Search collections...", style = MaterialTheme.typography.body2.copy(color = TextSecondary.copy(alpha = 0.6f))) },
                     shape = CircleShape,
                     leadingIcon = { IconSearch(TextSecondary, 18f) },
                     colors = TextFieldDefaults.outlinedTextFieldColors(
@@ -161,72 +232,21 @@ fun HomeTab(onGroupClick: (String) -> Unit) {
             }
         }
 
-        item {
-            Column(modifier = Modifier.padding(top = 24.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("RECENT FAVORITES", style = MaterialTheme.typography.caption.copy(fontWeight = FontWeight.Bold, color = TextSecondary))
-                    Text("View All", style = MaterialTheme.typography.caption.copy(color = BrandPrimary, fontWeight = FontWeight.Bold))
-                }
-                
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                LazyRow(
-                    contentPadding = PaddingValues(horizontal = 24.dp),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    item { FavoriteCard("Summer Festival", "128 photos", listOf(Color(0xFFFFEDD5), Color(0xFFFFF7ED)), { IconCamera(Color(0xFFF97316), 24f) }) }
-                    item { FavoriteCard("Japan Trip", "452 photos", listOf(Color(0xFFE0F2FE), Color(0xFFF0F9FF)), { IconAlbum(Color(0xFF0EA5E9), 24f) }) }
-                    item { FavoriteCard("Sam's B-Day", "89 photos", listOf(Color(0xFFF3E8FF), Color(0xFFFAF5FF)), { IconPlus(Color(0xFFA855F7), 24f) }) }
-                }
-            }
-        }
-
-        item {
-            Text(
-                "ALL COLLECTIONS",
-                style = MaterialTheme.typography.caption.copy(fontWeight = FontWeight.Bold, color = TextSecondary),
-                modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 32.dp, bottom = 12.dp)
-            )
-        }
-
         if (isLoading) {
             item { Box(Modifier.fillMaxWidth().padding(40.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = BrandPrimary) } }
         } else if (groups.isEmpty()) {
             item {
                 Column(modifier = Modifier.fillMaxWidth().padding(40.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Image(painter = painterResource("drawable/empty_album.png"), contentDescription = null, modifier = Modifier.size(120.dp))
-                    Text("No albums yet", style = MaterialTheme.typography.h3)
+                    Image(painter = painterResource("drawable/onboarding_adventure.png"), contentDescription = null, modifier = Modifier.size(120.dp))
+                    Text("No albums found", style = MaterialTheme.typography.h3)
+                    Button(onClick = { /* Navigate to Join/Create */ }, modifier = Modifier.padding(top = 16.dp)) {
+                        Text("Create Core Collection")
+                    }
                 }
             }
         } else {
-            items(groups) { group ->
-                CollectionCard(group.name, "Oct 24", "Updated by ${group.joinCode}") { onGroupClick(group.id) }
-            }
-        }
-    }
-}
-
-@Composable
-fun FavoriteCard(title: String, count: String, gradient: List<Color>, icon: @Composable () -> Unit) {
-    Card(
-        modifier = Modifier.width(160.dp).height(192.dp),
-        shape = MaterialTheme.shapes.medium,
-        elevation = 0.dp,
-        border = BorderStroke(1.dp, gradient[0])
-    ) {
-        Box(modifier = Modifier.background(Brush.verticalGradient(gradient)).padding(16.dp)) {
-            Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.SpaceBetween) {
-                Surface(shape = CircleShape, color = Color.White, modifier = Modifier.size(40.dp), elevation = 2.dp) {
-                    Box(contentAlignment = Alignment.Center) { icon() }
-                }
-                Column {
-                    Text(title, style = MaterialTheme.typography.h3.copy(fontSize = 15.sp), maxLines = 2)
-                    Text(count, style = MaterialTheme.typography.body2.copy(fontSize = 11.sp))
-                }
+            items(groups.filter { it.name.contains(searchText, ignoreCase = true) }) { group ->
+                CollectionCard(group.name, group.createdAt?.take(10) ?: "Today", "Code: ${group.joinCode}") { onGroupClick(group.id) }
             }
         }
     }
@@ -238,11 +258,10 @@ fun CollectionCard(title: String, time: String, subtext: String, onClick: () -> 
         modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 6.dp).clickable(onClick = onClick),
         shape = MaterialTheme.shapes.medium,
         color = Color.White,
-        border = BorderStroke(0.5.dp, DividerColor),
-        elevation = 0.dp
+        elevation = 2.dp
     ) {
         Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.size(56.dp).clip(RoundedCornerShape(12.dp)).background(Color(0xFFF3F4F6)), contentAlignment = Alignment.Center) {
+            Box(Modifier.size(56.dp).clip(RoundedCornerShape(12.dp)).background(Color(0xFFFEE2E2)), contentAlignment = Alignment.Center) {
                 IconAlbum(BrandPrimary, 24f)
             }
             Spacer(modifier = Modifier.width(16.dp))
@@ -253,7 +272,7 @@ fun CollectionCard(title: String, time: String, subtext: String, onClick: () -> 
                 }
                 Text(subtext, style = MaterialTheme.typography.body2.copy(fontSize = 12.sp))
             }
-            IconPlus(TextSecondary, 16f, modifier = Modifier.padding(start = 8.dp)) // Chevron mock
+            IconPlus(TextSecondary, 16f, modifier = Modifier.padding(start = 8.dp))
         }
     }
 }

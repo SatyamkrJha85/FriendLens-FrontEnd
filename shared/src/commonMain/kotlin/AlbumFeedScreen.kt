@@ -50,53 +50,48 @@ class AlbumFeedScreen(val groupId: String) : Screen {
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(bottom = 100.dp)
             ) {
-                // Top Header with Join Code
+                // Professional Header with Navigation
+                item {
+                    Column(modifier = Modifier.fillMaxWidth().background(Color.White).padding(16.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            IconButton(onClick = { navigator.pop() }) { IconBack(TextPrimary, 24f) }
+                            Text(activeGroup?.name ?: "Album Feed", style = MaterialTheme.typography.h2, modifier = Modifier.padding(start = 8.dp))
+                        }
+                    }
+                }
+
+                // Join Code Section
                 item {
                     activeGroup?.let { group ->
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(Color.White)
-                                .padding(16.dp)
+                        Surface(
+                            modifier = Modifier.fillMaxWidth().padding(16.dp),
+                            shape = RoundedCornerShape(24.dp),
+                            color = BrandPrimary,
+                            elevation = 8.dp
                         ) {
-                            Surface(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(100.dp)
-                                    .clickable { /* Copy Code */ },
-                                shape = MaterialTheme.shapes.medium,
-                                color = BrandPrimary,
-                                elevation = 4.dp
+                            Column(
+                                modifier = Modifier.padding(24.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
                             ) {
-                                Box(modifier = Modifier.fillMaxSize()) {
-                                    // Background Blobs from Stitch Design
-                                    Box(Modifier.align(Alignment.TopEnd).offset(x=20.dp, y=(-20).dp).size(60.dp).background(Color.White.copy(alpha=0.2f), CircleShape))
-                                    
-                                    Column(
-                                        modifier = Modifier.fillMaxSize(),
-                                        horizontalAlignment = Alignment.CenterHorizontally,
-                                        verticalArrangement = Arrangement.Center
-                                    ) {
-                                        Text("JOIN ALBUM", style = MaterialTheme.typography.caption.copy(color = Color.White.copy(alpha = 0.8f), letterSpacing = 2.sp))
-                                        Text(group.joinCode, style = MaterialTheme.typography.h1.copy(color = Color.White, fontSize = 32.sp, letterSpacing = 2.sp))
-                                        Text("Share this code with friends", style = MaterialTheme.typography.caption.copy(color = Color.White.copy(alpha = 0.7f), fontSize = 10.sp))
-                                    }
-                                }
+                                Text("INVITE FRIENDS", style = MaterialTheme.typography.caption.copy(color = Color.White.copy(alpha = 0.8f), letterSpacing = 2.sp))
+                                Text(group.joinCode, style = MaterialTheme.typography.h1.copy(color = Color.White, fontSize = 38.sp, letterSpacing = 4.sp))
+                                Text("Hold to copy and share", style = MaterialTheme.typography.caption.copy(color = Color.White.copy(alpha = 0.6f)))
                             }
                         }
                     }
                 }
 
-                // Recent Stories Row
+                // Group Members / "Stories" mock
                 item {
                     Column(modifier = Modifier.padding(vertical = 16.dp)) {
-                        Row(modifier = Modifier.fillMaxWidth().padding(start = 24.dp, end = 24.dp, bottom = 12.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text("My Moments", style = MaterialTheme.typography.h2.copy(fontSize = 20.sp))
-                            IconPlus(TextPrimary, 20f)
-                        }
-                        LazyRow(contentPadding = PaddingValues(horizontal = 20.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                            items(5) { index ->
-                                StoryItem(index == 0)
+                        Text("Top Contributors", style = MaterialTheme.typography.h3, modifier = Modifier.padding(start = 24.dp, bottom = 12.dp))
+                        LazyRow(contentPadding = PaddingValues(horizontal = 20.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                            // Extract unique contributors
+                            val contributors = photos.mapNotNull { it.uploadedByUsername }.distinct()
+                            if (contributors.isEmpty()) {
+                                items(3) { index -> StoryItemPlaceholder(index == 0) }
+                            } else {
+                                items(contributors) { name -> StoryItem(name) }
                             }
                         }
                     }
@@ -110,8 +105,8 @@ class AlbumFeedScreen(val groupId: String) : Screen {
                             modifier = Modifier.fillMaxWidth().padding(top = 60.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Image(painter = painterResource("drawable/empty_album.png"), contentDescription = null, modifier = Modifier.size(160.dp))
-                            Text("No moments yet", style = MaterialTheme.typography.h3.copy(color = TextSecondary))
+                            Image(painter = painterResource("drawable/onboarding_adventure.png"), contentDescription = null, modifier = Modifier.size(160.dp))
+                            Text("No memories yet", style = MaterialTheme.typography.h3.copy(color = TextSecondary))
                             Text("Be the first to capture something!", style = MaterialTheme.typography.body2)
                         }
                     }
@@ -128,36 +123,51 @@ class AlbumFeedScreen(val groupId: String) : Screen {
                 backgroundColor = BrandPrimary,
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
-                    .padding(start = 0.dp, top = 0.dp, end = 24.dp, bottom = 24.dp)
-                    .size(56.dp)
+                    .padding(24.dp)
+                    .size(64.dp)
                     .shadow(12.dp, CircleShape)
             ) {
-                IconCamera(Color.White, 24f)
+                IconCamera(Color.White, 28f)
             }
         }
     }
 
     @OptIn(ExperimentalResourceApi::class)
     @Composable
-    fun StoryItem(isFirst: Boolean) {
+    fun StoryItem(name: String) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Box(
                 modifier = Modifier
                     .size(72.dp)
                     .clip(CircleShape)
-                    .background(if (isFirst) Brush.linearGradient(listOf(BrandPrimary, Color(0xFFFDBA74))) else Brush.linearGradient(listOf(Color(0xFFE5E7EB), Color(0xFFD1D5DB))) )
+                    .background(Brush.linearGradient(listOf(BrandPrimary, Color(0xFFFDBA74))))
                     .padding(3.dp)
             ) {
                 Surface(modifier = Modifier.fillMaxSize(), shape = CircleShape, color = Color.White) {
-                    Image(
-                        painter = painterResource("drawable/onboarding_celebration.png"),
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize()
-                    )
+                    Box(contentAlignment = Alignment.Center) {
+                        Text(name.take(1).uppercase(), fontWeight = FontWeight.Bold, color = BrandPrimary, fontSize = 24.sp)
+                    }
                 }
             }
-            Text(if (isFirst) "Festival" else "Hiking", style = MaterialTheme.typography.caption.copy(fontSize = 10.sp, fontWeight = FontWeight.SemiBold), modifier = Modifier.padding(top = 4.dp))
+            Text(name, style = MaterialTheme.typography.caption.copy(fontSize = 11.sp, fontWeight = FontWeight.SemiBold), modifier = Modifier.padding(top = 4.dp))
+        }
+    }
+
+    @Composable
+    fun StoryItemPlaceholder(isFirst: Boolean) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Box(
+                modifier = Modifier
+                    .size(72.dp)
+                    .clip(CircleShape)
+                    .background(Color(0xFFE5E7EB))
+                    .padding(3.dp)
+            ) {
+                Surface(modifier = Modifier.fillMaxSize(), shape = CircleShape, color = Color.White) {
+                    Box(contentAlignment = Alignment.Center) { IconProfile(Color(0xFFD1D5DB), 24f) }
+                }
+            }
+            Text(if (isFirst) "Me" else "Friend", style = MaterialTheme.typography.caption.copy(color = TextSecondary))
         }
     }
 
@@ -168,54 +178,50 @@ class AlbumFeedScreen(val groupId: String) : Screen {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 8.dp)
-                .shadow(2.dp, MaterialTheme.shapes.medium)
-                .background(Color.White, MaterialTheme.shapes.medium)
+                .shadow(4.dp, RoundedCornerShape(24.dp))
+                .background(Color.White, RoundedCornerShape(24.dp))
         ) {
-            // User Header
-            Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                 Box(Modifier.size(36.dp).clip(CircleShape).background(Color(0xFFDBEAFE)), contentAlignment = Alignment.Center) {
-                    Text((photo.uploadedBy ?: "U").take(2).uppercase(), style = MaterialTheme.typography.caption.copy(color = Color(0xFF2563EB), fontWeight = FontWeight.Bold))
+                    Text((photo.uploadedByUsername ?: "U").take(1).uppercase(), style = MaterialTheme.typography.caption.copy(color = Color(0xFF2563EB), fontWeight = FontWeight.Bold))
                 }
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {
-                    Text(photo.uploadedByUsername ?: "Unknown User", style = MaterialTheme.typography.body1.copy(fontWeight = FontWeight.Bold, fontSize = 14.sp))
-                    Text(photo.uploadedAt?.take(10) ?: "Just now", style = MaterialTheme.typography.caption.copy(fontSize = 10.sp))
+                    Text(photo.uploadedByUsername ?: "Unknown", style = MaterialTheme.typography.body1.copy(fontWeight = FontWeight.Bold, fontSize = 14.sp))
+                    Text(photo.uploadedAt?.split("T")?.get(0) ?: "Recently", style = MaterialTheme.typography.caption.copy(fontSize = 10.sp))
                 }
                 Spacer(Modifier.weight(1f))
                 IconMore(TextSecondary, 20f)
             }
 
-            // Main Image Box
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(300.dp)
+                    .height(320.dp)
                     .padding(horizontal = 12.dp)
-                    .clip(MaterialTheme.shapes.medium)
+                    .clip(RoundedCornerShape(16.dp))
             ) {
                 Image(
-                    painter = painterResource("drawable/onboarding_capture.png"), // Placeholder
+                    painter = painterResource("drawable/onboarding_celebration.png"), // Placeholder
                     contentDescription = null,
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop
                 )
             }
 
-            // Interaction Bar
             Row(
-                modifier = Modifier.padding(12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                modifier = Modifier.padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    IconHeart(BrandPrimary, filled = true, size = 22f)
-                    Text("24", style = MaterialTheme.typography.caption.copy(fontWeight = FontWeight.Bold), modifier = Modifier.padding(start = 6.dp))
-                    
-                    Spacer(Modifier.width(16.dp))
-                    
-                    IconComment(TextSecondary, 22f)
-                    Text("5", style = MaterialTheme.typography.caption.copy(color = TextSecondary), modifier = Modifier.padding(start = 6.dp))
-                }
+                IconHeart(BrandPrimary, filled = true, size = 22f)
+                Text("Like", style = MaterialTheme.typography.caption.copy(fontWeight = FontWeight.Bold), modifier = Modifier.padding(start = 8.dp))
+                
+                Spacer(Modifier.width(20.dp))
+                
+                IconComment(TextSecondary, 22f)
+                Text("Comment", style = MaterialTheme.typography.caption.copy(color = TextSecondary), modifier = Modifier.padding(start = 8.dp))
+                
+                Spacer(Modifier.weight(1f))
                 
                 IconShare(TextSecondary, 20f)
             }
