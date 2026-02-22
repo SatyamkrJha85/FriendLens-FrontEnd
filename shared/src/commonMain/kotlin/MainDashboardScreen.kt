@@ -29,7 +29,11 @@ import org.jetbrains.compose.resources.painterResource
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 
+import cafe.adriel.voyager.core.screen.uniqueScreenKey
+
 class MainDashboardScreen : Screen {
+    override val key = uniqueScreenKey
+
     @Composable
     override fun Content() {
         var selectedTab by remember { mutableStateOf(0) }

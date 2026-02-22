@@ -29,7 +29,11 @@ import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
 
+import cafe.adriel.voyager.core.screen.uniqueScreenKey
+
 class LoginScreen : Screen {
+    override val key = uniqueScreenKey
+
     @OptIn(ExperimentalResourceApi::class)
     @Composable
     override fun Content() {

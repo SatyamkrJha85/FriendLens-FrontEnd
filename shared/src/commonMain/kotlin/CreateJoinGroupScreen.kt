@@ -25,7 +25,11 @@ import org.jetbrains.compose.resources.painterResource
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 
+import cafe.adriel.voyager.core.screen.uniqueScreenKey
+
 class CreateJoinGroupScreen : Screen {
+    override val key = uniqueScreenKey
+
     @OptIn(ExperimentalResourceApi::class, ExperimentalMaterialApi::class)
     @Composable
     override fun Content() {
