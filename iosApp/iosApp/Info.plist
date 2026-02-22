@@ -46,5 +46,9 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>FriendLens needs camera access to capture moments with your friends.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>FriendLens needs gallery access to upload existing photos to your albums.</string>
 </dict>
 </plist>

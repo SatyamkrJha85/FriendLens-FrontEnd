@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -30,11 +31,10 @@ class SplashScreen : Screen {
     @Composable
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
-        val scale = remember { Animatable(0.8f) }
+        val scale = remember { Animatable(0.7f) }
         val alpha = remember { Animatable(0f) }
 
         LaunchedEffect(Unit) {
-            // Animating in
             launch {
                 scale.animateTo(
                     targetValue = 1f,
@@ -45,12 +45,11 @@ class SplashScreen : Screen {
                 )
             }
             launch {
-                alpha.animateTo(1f, tween(1000, easing = LinearOutSlowInEasing))
+                alpha.animateTo(1f, tween(1200, easing = FastOutSlowInEasing))
             }
 
-            delay(2500)
+            delay(2800)
             
-            // Navigate to appropriate screen based on session
             if (SessionManager.session.isLoggedIn) {
                 navigator.replaceAll(MainDashboardScreen())
             } else {
@@ -61,73 +60,84 @@ class SplashScreen : Screen {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(brush = Brush.verticalGradient(listOf(Color(0xFF0F1A3E), Color(0xFF1A1A2E)))),
+                .background(brush = Brush.verticalGradient(listOf(Color(0xFF0F172A), Color(0xFF1E293B)))),
             contentAlignment = Alignment.Center
         ) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.scale(scale.value).alpha(alpha.value)
             ) {
-                // App Icon with glow effect
+                // Branded Icon Container
                 Box(
                     modifier = Modifier
-                        .size(140.dp)
-                        .clip(RoundedCornerShape(32.dp))
-                        .background(Color.White.copy(alpha = 0.1f)),
+                        .size(160.dp)
+                        .clip(RoundedCornerShape(40.dp))
+                        .background(Color.White.copy(alpha = 0.05f))
+                        .padding(16.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Image(
                         painter = painterResource("drawable/app_icon.png"),
                         contentDescription = "FriendLens Logo",
                         modifier = Modifier
-                            .size(120.dp)
-                            .clip(RoundedCornerShape(24.dp)),
+                            .fillMaxSize()
+                            .clip(RoundedCornerShape(32.dp)),
                         contentScale = ContentScale.Crop
                     )
                 }
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(32.dp))
 
                 Text(
                     text = "FriendLens",
-                    fontSize = 40.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White,
-                    letterSpacing = 2.sp
+                    style = MaterialTheme.typography.h1.copy(
+                        color = Color.White,
+                        fontSize = 42.sp,
+                        letterSpacing = (-1).sp
+                    )
                 )
 
                 Text(
                     text = "ALL MOMENTS. ONE PLACE.",
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = BrandCoral,
-                    letterSpacing = 4.sp
+                    style = MaterialTheme.typography.caption.copy(
+                        color = BrandCoral,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 4.sp
+                    )
                 )
             }
             
-            // Loading indicator at bottom
+            // Modern Dot Loader
             Box(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
-                    .padding(bottom = 60.dp)
-                    .alpha(0.6f)
+                    .padding(bottom = 80.dp)
             ) {
                 val infiniteTransition = rememberInfiniteTransition()
-                val dotScale by infiniteTransition.animateFloat(
-                    initialValue = 0.5f,
-                    targetValue = 1.2f,
+                val dotYOffset by infiniteTransition.animateFloat(
+                    initialValue = 0f,
+                    targetValue = -12f,
                     animationSpec = infiniteRepeatable(
-                        animation = tween(800, easing = FastOutSlowInEasing),
+                        animation = tween(600, easing = FastOutSlowInEasing),
                         repeatMode = RepeatMode.Reverse
                     )
                 )
                 
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    listOf(BrandBlue, BrandPurple, BrandCoral).forEachIndexed { index, color ->
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                    BrandGradientFull.forEachIndexed { index, color ->
+                        val delay = index * 100
+                        val animatedOffset by infiniteTransition.animateFloat(
+                            initialValue = 0f,
+                            targetValue = -10f,
+                            animationSpec = infiniteRepeatable(
+                                animation = tween(600, delayMillis = delay, easing = FastOutSlowInEasing),
+                                repeatMode = RepeatMode.Reverse
+                            )
+                        )
                         Box(
                             modifier = Modifier
-                                .size(8.dp)
-                                .scale(dotScale)
+                                .size(10.dp)
+                                .offset(y = animatedOffset.dp)
                                 .clip(CircleShape)
                                 .background(color)
                         )

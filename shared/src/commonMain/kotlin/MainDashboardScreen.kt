@@ -24,6 +24,7 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.ExperimentalResourceApi
+import org.jetbrains.compose.resources.painterResource
 
 class MainDashboardScreen : Screen {
     @Composable
@@ -34,25 +35,35 @@ class MainDashboardScreen : Screen {
 
         Scaffold(
             bottomBar = {
-                Surface(elevation = 24.dp, color = Color.White, shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)) {
+                Surface(
+                    elevation = 20.dp,
+                    color = Color.White,
+                    shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp)
+                ) {
                     Row(
-                        modifier = Modifier.fillMaxWidth().height(72.dp).padding(horizontal = 8.dp),
+                        modifier = Modifier.fillMaxWidth().height(80.dp).padding(horizontal = 12.dp),
                         horizontalArrangement = Arrangement.SpaceAround,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        NavItem(icon = { IconHome(if (selectedTab == 0) BrandBlue else TextSecondary, 22f) }, label = "Home", selected = selectedTab == 0) { selectedTab = 0 }
-                        NavItem(icon = { IconAlbum(if (selectedTab == 1) BrandPurple else TextSecondary, 22f) }, label = "Albums", selected = selectedTab == 1) { selectedTab = 1 }
+                        NavItem(icon = { IconHome(if (selectedTab == 0) BrandBlue else TextSecondary, 24f) }, label = "Home", selected = selectedTab == 0) { selectedTab = 0 }
+                        NavItem(icon = { IconAlbum(if (selectedTab == 1) BrandPurple else TextSecondary, 24f) }, label = "Feed", selected = selectedTab == 1) { selectedTab = 1 }
 
-                        // Center FAB
+                        // Central Highlighted FAB
                         Box(
-                            modifier = Modifier.size(56.dp).shadow(12.dp, CircleShape).clip(CircleShape)
-                                .background(brush = Brush.sweepGradient(listOf(BrandBlue, BrandPurple, BrandPink, BrandCoral, BrandOrange, BrandBlue)))
+                            modifier = Modifier
+                                .size(60.dp)
+                                .offset(y = (-15).dp)
+                                .shadow(12.dp, CircleShape)
+                                .clip(CircleShape)
+                                .background(brush = Brush.linearGradient(BrandGradientFull))
                                 .clickable { navigator.push(PhotoCaptureScreen()) },
                             contentAlignment = Alignment.Center
-                        ) { IconCamera(Color.White, 26f) }
+                        ) {
+                            IconCamera(Color.White, 30f)
+                        }
 
-                        NavItem(icon = { IconGroup(if (selectedTab == 2) BrandCoral else TextSecondary, 22f) }, label = "Groups", selected = selectedTab == 2) { selectedTab = 2 }
-                        NavItem(icon = { IconProfile(if (selectedTab == 3) BrandOrange else TextSecondary, 22f) }, label = "Profile", selected = selectedTab == 3) { selectedTab = 3 }
+                        NavItem(icon = { IconGroup(if (selectedTab == 2) BrandCoral else TextSecondary, 24f) }, label = "Groups", selected = selectedTab == 2) { selectedTab = 2 }
+                        NavItem(icon = { IconProfile(if (selectedTab == 3) BrandOrange else TextSecondary, 24f) }, label = "Me", selected = selectedTab == 3) { selectedTab = 3 }
                     }
                 }
             }
@@ -72,12 +83,19 @@ class MainDashboardScreen : Screen {
 @Composable
 fun NavItem(icon: @Composable () -> Unit, label: String, selected: Boolean, onClick: () -> Unit) {
     Column(
-        modifier = Modifier.clickable(onClick = onClick).padding(horizontal = 12.dp, vertical = 8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+        modifier = Modifier.clickable(onClick = onClick).padding(horizontal = 8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
     ) {
         icon()
         Spacer(modifier = Modifier.height(4.dp))
-        Text(label, fontSize = 10.sp, fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal, color = if (selected) TextDark else TextSecondary)
+        Text(
+            text = label,
+            style = MaterialTheme.typography.caption.copy(
+                color = if (selected) TextDark else TextSecondary,
+                fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium
+            )
+        )
     }
 }
 
@@ -88,99 +106,118 @@ fun HomeTab(onGroupClick: (String) -> Unit) {
     var isLoading by remember { mutableStateOf(true) }
 
     LaunchedEffect(Unit) {
-        try { val resp = FriendLensApi.getAllGroups(); if (resp.status == "success") groups = resp.groups } catch (_: Exception) {}
+        try {
+            val resp = FriendLensApi.getAllGroups()
+            if (resp.status == "success") groups = resp.groups
+        } catch (_: Exception) {}
         isLoading = false
     }
 
-    LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(24.dp)) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(24.dp)
+    ) {
         item {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Column {
-                    Text("Your Albums", fontSize = 32.sp, fontWeight = FontWeight.Bold, color = TextDark)
-                    Text("${groups.size} collections · One place", fontSize = 14.sp, color = TextSecondary)
+                    Text("Hello, ${SessionManager.session.username ?: "User"}", style = MaterialTheme.typography.h3)
+                    Text("Ready for new memories?", style = MaterialTheme.typography.body2)
                 }
-                Box(modifier = Modifier.size(48.dp).clip(RoundedCornerShape(16.dp)).background(CardBackground).clickable { }, contentAlignment = Alignment.Center) { IconBell(TextDark, 22f) }
-            }
-            Spacer(modifier = Modifier.height(24.dp))
-        }
-
-        item {
-            OutlinedTextField(
-                value = "", onValueChange = {},
-                placeholder = { Text("Search albums or friends...", color = TextSecondary) },
-                modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(24.dp), singleLine = true,
-                colors = TextFieldDefaults.outlinedTextFieldColors(focusedBorderColor = BrandBlue, unfocusedBorderColor = DividerColor, backgroundColor = Color.White)
-            )
-            Spacer(modifier = Modifier.height(28.dp))
-        }
-
-        item {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Text("RECENT FAVORITES", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextSecondary, letterSpacing = 1.sp)
-                Text("View All", fontSize = 12.sp, color = BrandBlue, fontWeight = FontWeight.Bold, modifier = Modifier.clickable { })
-            }
-            Spacer(modifier = Modifier.height(16.dp))
-        }
-
-        item {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                FavoriteCard(Modifier.weight(1f), "Summer Festival", "18 photos", listOf(Color(0xFFEBF4FF), Color(0xFFDBEAFE))) { IconCamera(BrandBlue, 28f) }
-                FavoriteCard(Modifier.weight(1f), "Japan Trip", "450 photos", listOf(Color(0xFFF5F3FF), Color(0xFFEDE9FE))) { IconAlbum(BrandPurple, 28f) }
+                Surface(
+                    shape = CircleShape,
+                    color = Color.White,
+                    border = null,
+                    modifier = Modifier.size(44.dp).clickable { },
+                    elevation = 2.dp
+                ) {
+                    Box(contentAlignment = Alignment.Center) { IconBell(BrandCoral, 22f) }
+                }
             }
             Spacer(modifier = Modifier.height(32.dp))
         }
 
         item {
-            Text("ALL COLLECTIONS", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextSecondary, letterSpacing = 1.sp)
+            Text("PINNED ALBUMS", style = MaterialTheme.typography.caption.copy(letterSpacing = 2.sp, fontWeight = FontWeight.Bold))
+            Spacer(modifier = Modifier.height(16.dp))
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                FavoriteCard(Modifier.weight(1f), "Trip to Bali", "24 photos", listOf(Color(0xFFE0F2FE), Color(0xFFBAE6FD))) { IconCamera(BrandBlue, 28f) }
+                FavoriteCard(Modifier.weight(1f), "Work Lunch", "8 photos", listOf(Color(0xFFEDE9FE), Color(0xFFDDD6FE))) { IconAlbum(BrandPurple, 28f) }
+            }
+            Spacer(modifier = Modifier.height(32.dp))
+        }
+
+        item {
+            Text("ALL COLLECTIONS", style = MaterialTheme.typography.caption.copy(letterSpacing = 2.sp, fontWeight = FontWeight.Bold))
             Spacer(modifier = Modifier.height(16.dp))
         }
 
         if (isLoading) {
-            item { Box(Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = BrandBlue, strokeWidth = 3.dp) } }
+            item { Box(Modifier.fillMaxWidth().padding(40.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = BrandBlue) } }
         } else if (groups.isEmpty()) {
             item {
-                Column(modifier = Modifier.fillMaxWidth().padding(vertical = 40.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Image(painter = org.jetbrains.compose.resources.painterResource("drawable/empty_album.png"), contentDescription = "Empty", modifier = Modifier.size(160.dp), contentScale = ContentScale.Fit)
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 40.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Image(painter = painterResource("drawable/empty_album.png"), contentDescription = null, modifier = Modifier.size(140.dp), contentScale = ContentScale.Fit)
                     Spacer(Modifier.height(16.dp))
-                    Text("No collections yet", fontWeight = FontWeight.Bold, color = TextDark, fontSize = 18.sp)
-                    Text("Start by joining your friends or\ncreating a new album.", color = TextSecondary, fontSize = 14.sp, textAlign = TextAlign.Center)
+                    Text("No albums yet", style = MaterialTheme.typography.h3)
+                    Text("Start by creating your first group.", style = MaterialTheme.typography.body2, textAlign = TextAlign.Center)
                 }
             }
         } else {
-            items(groups) { group -> CollectionCard(group.name, group.joinCode, "", onClick = { onGroupClick(group.id) }) { IconCamera(BrandBlue, 22f) } }
-        }
-    }
-}
-
-@Composable
-fun FavoriteCard(modifier: Modifier = Modifier, title: String, count: String, gradient: List<Color>, iconComposable: @Composable () -> Unit) {
-    Box(modifier = modifier.height(150.dp).shadow(4.dp, RoundedCornerShape(20.dp)).clip(RoundedCornerShape(20.dp)).background(brush = Brush.verticalGradient(gradient)).padding(20.dp)) {
-        Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.SpaceBetween) {
-            iconComposable()
-            Column {
-                Text(title, fontWeight = FontWeight.Bold, color = TextDark, fontSize = 16.sp)
-                Text(count, fontSize = 12.sp, color = TextSecondary)
+            items(groups) { group ->
+                CollectionCard(group.name, group.joinCode) { onGroupClick(group.id) }
             }
         }
     }
 }
 
 @Composable
-fun CollectionCard(title: String, code: String, count: String, onClick: () -> Unit = {}, iconComposable: @Composable () -> Unit) {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp).shadow(2.dp, RoundedCornerShape(16.dp)).clip(RoundedCornerShape(16.dp)).background(Color.White).clickable(onClick = onClick).padding(16.dp),
-        verticalAlignment = Alignment.CenterVertically
+fun FavoriteCard(modifier: Modifier, title: String, count: String, gradient: List<Color>, icon: @Composable () -> Unit) {
+    Card(
+        modifier = modifier.height(160.dp),
+        shape = MaterialTheme.shapes.medium,
+        elevation = 0.dp
     ) {
-        Box(Modifier.size(48.dp).clip(RoundedCornerShape(14.dp)).background(CardBackground), contentAlignment = Alignment.Center) { iconComposable() }
-        Spacer(Modifier.width(16.dp))
-        Column(Modifier.weight(1f)) {
-            Text(title, fontWeight = FontWeight.Bold, color = TextDark, fontSize = 15.sp)
-            Text("Code: $code", fontSize = 12.sp, color = TextSecondary)
-        }
-        if (count.isNotEmpty()) {
-            Box(Modifier.clip(RoundedCornerShape(12.dp)).background(BrandBlue.copy(alpha = 0.1f)).padding(horizontal = 12.dp, vertical = 6.dp)) {
-                Text(count, fontWeight = FontWeight.Bold, color = BrandBlue, fontSize = 13.sp)
+        Box(modifier = Modifier.background(Brush.verticalGradient(gradient)).padding(20.dp)) {
+            Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.SpaceBetween) {
+                Surface(shape = CircleShape, color = Color.White.copy(alpha = 0.5f), modifier = Modifier.size(40.dp)) {
+                    Box(contentAlignment = Alignment.Center) { icon() }
+                }
+                Column {
+                    Text(title, style = MaterialTheme.typography.h3.copy(fontSize = 15.sp))
+                    Text(count, style = MaterialTheme.typography.caption)
+                }
             }
+        }
+    }
+}
+
+@Composable
+fun CollectionCard(title: String, code: String, onClick: () -> Unit) {
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp).clickable(onClick = onClick),
+        shape = MaterialTheme.shapes.medium,
+        elevation = 2.dp
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Surface(shape = RoundedCornerShape(12.dp), color = CardBackground, modifier = Modifier.size(50.dp)) {
+                Box(contentAlignment = Alignment.Center) { IconAlbum(BrandBlue, 20f) }
+            }
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(Modifier.weight(1f)) {
+                Text(title, style = MaterialTheme.typography.h3.copy(fontSize = 16.sp))
+                Text("Code: $code", style = MaterialTheme.typography.body2)
+            }
+            IconBack(TextSecondary, 16f) // Reusing back icon as a chevron
         }
     }
 }

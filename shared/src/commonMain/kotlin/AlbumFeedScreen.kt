@@ -54,9 +54,7 @@ class AlbumFeedScreen : Screen {
         }
 
         LaunchedEffect(initialGroupId) {
-            if (initialGroupId != null) {
-                selectedGroupId = initialGroupId
-            }
+            if (initialGroupId != null) selectedGroupId = initialGroupId
         }
 
         LaunchedEffect(selectedGroupId) {
@@ -68,168 +66,185 @@ class AlbumFeedScreen : Screen {
             }
         }
 
-        LazyColumn(modifier = Modifier.fillMaxSize().background(BackgroundLight), contentPadding = PaddingValues(bottom = 100.dp)) {
-            // Active group banner
-            item {
-                val activeGroup = groups.find { it.id == selectedGroupId }
-                Box(
-                    modifier = Modifier.padding(24.dp).fillMaxWidth().height(90.dp).shadow(8.dp, RoundedCornerShape(24.dp))
-                        .clip(RoundedCornerShape(24.dp))
-                        .background(brush = Brush.horizontalGradient(listOf(BrandBlue, BrandPurple, BrandCoral)))
-                        .padding(20.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            IconShare(Color.White.copy(alpha = 0.8f), 14f)
-                            Spacer(Modifier.width(6.dp))
-                            Text("SHARE THIS CODE", color = Color.White.copy(alpha = 0.8f), fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
-                        }
-                        Spacer(Modifier.height(6.dp))
-                        Text(activeGroup?.joinCode ?: "------", color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.Bold, letterSpacing = 4.sp)
-                    }
-                }
-            }
-
-            // Group pills
-            item {
-                if (groups.isNotEmpty()) {
-                    LazyRow(contentPadding = PaddingValues(horizontal = 24.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        items(groups) { group ->
-                            val sel = group.id == selectedGroupId
-                            Box(
-                                modifier = Modifier.clip(RoundedCornerShape(20.dp))
-                                    .background(if (sel) BrandBlue else Color.White)
-                                    .clickable { selectedGroupId = group.id }
-                                    .padding(horizontal = 20.dp, vertical = 10.dp)
-                            ) { Text(group.name, color = if (sel) Color.White else TextDark, fontWeight = FontWeight.SemiBold, fontSize = 13.sp) }
-                        }
-                    }
-                    Spacer(Modifier.height(24.dp))
-                }
-            }
-
-            item {
-                Row(Modifier.fillMaxWidth().padding(horizontal = 24.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    Text("My Moments", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = TextDark)
-                    Text("${photos.size} photos", fontSize = 13.sp, color = TextSecondary)
-                }
-                Spacer(Modifier.height(8.dp))
-            }
-
-            // Story bubbles
-            item {
-                LazyRow(contentPadding = PaddingValues(horizontal = 24.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    item { StoryBubble("Festival") { IconCamera(BrandBlue, 28f) } }
-                    item { StoryBubble("Hiking") { IconAlbum(BrandPurple, 28f) } }
-                    item { StoryBubble("Birthday") { IconHeart(BrandPink, filled = true, size = 28f) } }
-                    item {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Box(Modifier.size(64.dp).clip(CircleShape).background(DividerColor), contentAlignment = Alignment.Center) { IconPlus(TextSecondary, 24f) }
-                            Spacer(Modifier.height(8.dp))
-                            Text("Add", fontSize = 12.sp, color = TextSecondary)
-                        }
-                    }
-                }
-                Spacer(Modifier.height(28.dp))
-            }
-
-            if (isLoading) {
-                item { Box(Modifier.fillMaxWidth().padding(40.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = BrandBlue, strokeWidth = 3.dp) } }
-            }
-
-            if (photos.isEmpty() && !isLoading) {
-                item {
-                    Column(
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 80.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
+        Column(modifier = Modifier.fillMaxSize().background(BackgroundLight)) {
+            // Group Selection Header
+            Surface(elevation = 4.dp, shape = RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp), color = Color.White) {
+                Column(modifier = Modifier.padding(bottom = 16.dp)) {
+                    Spacer(Modifier.height(16.dp))
+                    LazyRow(
+                        contentPadding = PaddingValues(horizontal = 24.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Image(
-                            painter = painterResource("drawable/empty_album.png"),
-                            contentDescription = "No photos",
-                            modifier = Modifier.size(200.dp).alpha(0.8f),
-                            contentScale = ContentScale.Fit
-                        )
-                        Spacer(Modifier.height(24.dp))
-                        Text("Your album is empty", fontWeight = FontWeight.Bold, color = TextDark, fontSize = 20.sp)
-                        Text("Be the first one to share a moment!", color = TextSecondary, fontSize = 15.sp)
+                        items(groups) { group ->
+                            val isSelected = group.id == selectedGroupId
+                            Surface(
+                                modifier = Modifier.clickable { selectedGroupId = group.id },
+                                shape = MaterialTheme.shapes.medium,
+                                color = if (isSelected) BrandBlue else BackgroundLight,
+                                elevation = if (isSelected) 4.dp else 0.dp
+                            ) {
+                                Text(
+                                    text = group.name,
+                                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp),
+                                    style = MaterialTheme.typography.body2.copy(
+                                        color = if (isSelected) Color.White else TextSecondary,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                )
+                            }
+                        }
                     }
                 }
-            } else {
-                items(photos) { p -> FeedPost(selectedGroupId ?: "", p.id, p.uploadedByUsername ?: "Unknown", p.uploadedByUsername ?: "", p.uploadedAt?.take(10) ?: "", 0) }
+            }
+
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(bottom = 120.dp)
+            ) {
+                // Share Code Hero Section
+                item {
+                    val activeGroup = groups.find { it.id == selectedGroupId }
+                    if (activeGroup != null) {
+                        Card(
+                            modifier = Modifier.padding(24.dp).fillMaxWidth().height(100.dp),
+                            shape = MaterialTheme.shapes.large,
+                            elevation = 8.dp
+                        ) {
+                            Box(modifier = Modifier.background(Brush.horizontalGradient(BrandGradient)).padding(20.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxSize(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column {
+                                        Text("JOIN CODE", style = MaterialTheme.typography.caption.copy(color = Color.White.copy(alpha = 0.8f), letterSpacing = 2.sp))
+                                        Text(activeGroup.joinCode, style = MaterialTheme.typography.h2.copy(color = Color.White, letterSpacing = 4.sp))
+                                    }
+                                    Button(
+                                        onClick = { },
+                                        shape = CircleShape,
+                                        colors = ButtonDefaults.buttonColors(backgroundColor = Color.White.copy(alpha = 0.2f)),
+                                        elevation = null
+                                    ) {
+                                        IconShare(Color.White, 20f)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (isLoading) {
+                    item { Box(Modifier.fillMaxWidth().padding(40.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = BrandBlue) } }
+                } else if (photos.isEmpty()) {
+                    item {
+                        Column(
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 60.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Image(painter = painterResource("drawable/empty_album.png"), contentDescription = null, modifier = Modifier.size(180.dp).alpha(0.6f))
+                            Spacer(Modifier.height(24.dp))
+                            Text("No memories yet", style = MaterialTheme.typography.h3)
+                            Text("Share the first photo in this album.", style = MaterialTheme.typography.body2)
+                        }
+                    }
+                } else {
+                    items(photos) { photo ->
+                        PhotoFeedItem(
+                            groupId = selectedGroupId ?: "",
+                            photo = photo,
+                            onLike = { 
+                                scope.launch {
+                                    try { 
+                                        FriendLensApi.likePhoto(selectedGroupId ?: "", photo.id)
+                                    } catch (_: Exception) {}
+                                }
+                            }
+                        )
+                    }
+                }
             }
         }
-    }
-}
-
-@Composable
-fun StoryBubble(label: String, iconContent: @Composable () -> Unit) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Box(Modifier.size(64.dp).clip(CircleShape).background(CardBackground), contentAlignment = Alignment.Center) { iconContent() }
-        Spacer(Modifier.height(8.dp))
-        Text(label, fontSize = 12.sp, color = TextDark, fontWeight = FontWeight.SemiBold)
     }
 }
 
 @OptIn(ExperimentalResourceApi::class)
 @Composable
-fun FeedPost(groupId: String, photoId: String, title: String, author: String, daysAgo: String, likes: Int) {
-    val scope = rememberCoroutineScope()
+fun PhotoFeedItem(groupId: String, photo: Photo, onLike: () -> Unit) {
     var isLiked by remember { mutableStateOf(false) }
-    var likeCount by remember { mutableStateOf(likes) }
+    var likesCount by remember { mutableStateOf(0) }
 
-    Column(Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 12.dp)) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.size(40.dp).clip(CircleShape).background(BrandBlue.copy(alpha = 0.15f)), contentAlignment = Alignment.Center) {
-                    Text(title.take(1).uppercase(), fontWeight = FontWeight.Bold, color = BrandBlue)
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 12.dp),
+        shape = MaterialTheme.shapes.large,
+        elevation = 2.dp
+    ) {
+        Column {
+            // Header
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Surface(
+                    shape = CircleShape,
+                    color = BrandGradient[(photo.uploadedByUsername?.length ?: 0) % BrandGradient.size].copy(alpha = 0.2f),
+                    modifier = Modifier.size(40.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text(
+                            text = photo.uploadedByUsername?.firstOrNull()?.uppercase() ?: "U",
+                            style = MaterialTheme.typography.h3.copy(fontSize = 14.sp, color = BrandBlue)
+                        )
+                    }
                 }
                 Spacer(Modifier.width(12.dp))
                 Column {
-                    Text(title, fontWeight = FontWeight.Bold, color = TextDark, fontSize = 15.sp)
-                    Text("$author · $daysAgo", fontSize = 12.sp, color = TextSecondary)
+                    Text(photo.uploadedByUsername ?: "Unknown", style = MaterialTheme.typography.h3.copy(fontSize = 15.sp))
+                    Text(photo.uploadedAt?.take(16) ?: "Just now", style = MaterialTheme.typography.caption)
                 }
+                Spacer(Modifier.weight(1f))
+                IconMore(TextSecondary, 18f)
             }
-            IconButton(onClick = {}) { IconMore(TextSecondary, 18f) }
-        }
-        Spacer(Modifier.height(14.dp))
 
-        Box(
-            modifier = Modifier.fillMaxWidth().height(240.dp).shadow(4.dp, RoundedCornerShape(24.dp))
-                .clip(RoundedCornerShape(24.dp)).background(CardBackground),
-            contentAlignment = Alignment.Center
-        ) {
-            Image(painter = painterResource("drawable/photo_sample.png"), contentDescription = "Photo", modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
-        }
-        Spacer(Modifier.height(14.dp))
-
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Row(horizontalArrangement = Arrangement.spacedBy(20.dp), verticalAlignment = Alignment.CenterVertically) {
-                Row(
-                    modifier = Modifier.clickable {
-                        scope.launch {
-                            try {
-                                if (isLiked) { if (groupId.isNotEmpty()) FriendLensApi.unlikePhoto(groupId, photoId); if(likeCount > 0) likeCount-- }
-                                else { if (groupId.isNotEmpty()) FriendLensApi.likePhoto(groupId, photoId); likeCount++ }
-                                isLiked = !isLiked
-                            } catch (_: Exception) { isLiked = !isLiked }
-                        }
-                    },
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    IconHeart(if (isLiked) BrandPink else TextSecondary, filled = isLiked, size = 22f)
-                    Spacer(Modifier.width(6.dp))
-                    Text("$likeCount", fontWeight = FontWeight.Bold, color = TextDark, fontSize = 14.sp)
-                }
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    IconComment(TextSecondary, 20f)
-                    Spacer(Modifier.width(6.dp))
-                    Text("8", fontWeight = FontWeight.Bold, color = TextDark, fontSize = 14.sp)
-                }
+            // Image
+            Box(
+                modifier = Modifier.fillMaxWidth().height(280.dp).background(CardBackground)
+            ) {
+                Image(
+                    painter = painterResource("drawable/photo_sample.png"),
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
             }
-            IconButton(onClick = {}) { IconShare(TextSecondary, 20f) }
+
+            // Actions
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
+                    Row(
+                        modifier = Modifier.clickable { 
+                            isLiked = !isLiked
+                            likesCount += if (isLiked) 1 else -1
+                            onLike()
+                        },
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconHeart(if (isLiked) BrandPink else TextSecondary, filled = isLiked, size = 24f)
+                        Spacer(Modifier.width(6.dp))
+                        Text(text = "$likesCount", style = MaterialTheme.typography.h3.copy(fontSize = 14.sp))
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        IconComment(TextSecondary, 22f)
+                        Spacer(Modifier.width(6.dp))
+                        Text(text = "12", style = MaterialTheme.typography.h3.copy(fontSize = 14.sp))
+                    }
+                }
+                IconShare(TextSecondary, 22f)
+            }
         }
-        Spacer(Modifier.height(16.dp))
-        Divider(color = DividerColor)
     }
 }

@@ -30,77 +30,143 @@ class PhotoCaptureScreen : Screen {
         var selectedMode by remember { mutableStateOf("PHOTO") }
 
         Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
+            // "Lens" Preview Mock
             Box(
-                modifier = Modifier.fillMaxSize()
-                    .background(brush = Brush.verticalGradient(listOf(Color(0xFF0F1A3E).copy(alpha = 0.6f), Color(0xFF1A0E28).copy(alpha = 0.8f)))),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        brush = Brush.verticalGradient(
+                            listOf(Color(0xFF0F172A).copy(alpha = 0.8f), Color(0xFF000000))
+                        )
+                    ),
                 contentAlignment = Alignment.Center
-            ) { IconCamera(Color.White.copy(alpha = 0.15f), 120f) }
-
-            // Top bar
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(top = 56.dp, start = 24.dp, end = 24.dp),
-                horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically
             ) {
-                Box(Modifier.size(40.dp).clip(CircleShape).background(Color.Black.copy(alpha = 0.4f)).clickable { navigator.pop() }, contentAlignment = Alignment.Center) {
-                    IconClose(Color.White, 16f)
-                }
-                Box(Modifier.clip(RoundedCornerShape(20.dp)).background(Color.Black.copy(alpha = 0.4f)).padding(horizontal = 16.dp, vertical = 8.dp)) {
-                    Text("FriendLens Album", color = Color.White, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
-                }
-                Box(Modifier.size(40.dp).clip(CircleShape).background(Color.Black.copy(alpha = 0.4f)), contentAlignment = Alignment.Center) {
-                    IconFlash(WarningAmber, 18f)
-                }
+                IconCamera(Color.White.copy(alpha = 0.1f), 140f)
             }
 
-            Column(
-                modifier = Modifier.fillMaxWidth().align(Alignment.BottomCenter).padding(bottom = 48.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                // Zoom
+            // Controls Overlay
+            Column(modifier = Modifier.fillMaxSize()) {
+                // Toolbar
                 Row(
-                    modifier = Modifier.clip(RoundedCornerShape(24.dp)).background(Color.Black.copy(alpha = 0.5f)).padding(horizontal = 20.dp, vertical = 10.dp),
-                    horizontalArrangement = Arrangement.spacedBy(24.dp), verticalAlignment = Alignment.CenterVertically
+                    modifier = Modifier.fillMaxWidth().padding(top = 60.dp, start = 24.dp, end = 24.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(".5", color = Color.White.copy(alpha = 0.5f), fontSize = 13.sp, fontWeight = FontWeight.Bold)
-                    Text("1×", color = BrandBlue, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                    Text("3", color = Color.White.copy(alpha = 0.5f), fontSize = 13.sp, fontWeight = FontWeight.Bold)
-                }
-
-                Spacer(Modifier.height(36.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 40.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(Modifier.size(48.dp).clip(RoundedCornerShape(10.dp)).border(2.dp, Color.White.copy(alpha = 0.3f), RoundedCornerShape(10.dp)), contentAlignment = Alignment.Center) {
-                        Image(painter = painterResource("drawable/photo_sample.png"), contentDescription = "Gallery", modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(8.dp)), contentScale = ContentScale.Crop)
+                    Surface(
+                        shape = CircleShape,
+                        color = Color.White.copy(alpha = 0.1f),
+                        modifier = Modifier.size(44.dp).clickable { navigator.pop() }
+                    ) {
+                        Box(contentAlignment = Alignment.Center) { IconClose(Color.White, 20f) }
+                    }
+                    
+                    Surface(
+                        shape = RoundedCornerShape(20.dp),
+                        color = Color.White.copy(alpha = 0.1f),
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                    ) {
+                        Text("MOMENT ALBUM", style = MaterialTheme.typography.caption.copy(color = Color.White, letterSpacing = 2.sp))
                     }
 
-                    // Shutter with icon gradient ring
-                    Box(
-                        modifier = Modifier.size(80.dp).clip(CircleShape)
-                            .border(4.dp, Brush.sweepGradient(listOf(BrandBlue, BrandPurple, BrandPink, BrandCoral, BrandOrange, BrandBlue)), CircleShape)
-                            .padding(6.dp).clip(CircleShape)
-                            .background(Color.White)
-                            .clickable { sendLocalNotification("Photo Captured!", "Your photo will be uploaded to the album.") }
-                    )
-
-                    Box(Modifier.size(48.dp).clip(CircleShape).background(Color.Black.copy(alpha = 0.4f)), contentAlignment = Alignment.Center) {
-                        IconFlip(Color.White, 22f)
+                    Surface(
+                        shape = CircleShape,
+                        color = Color.White.copy(alpha = 0.1f),
+                        modifier = Modifier.size(44.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) { IconFlash(WarningAmber, 20f) }
                     }
                 }
 
-                Spacer(Modifier.height(28.dp))
+                Spacer(modifier = Modifier.weight(1f))
 
-                Row(horizontalArrangement = Arrangement.spacedBy(32.dp), verticalAlignment = Alignment.CenterVertically) {
-                    listOf("PORTRAIT", "PHOTO", "SQUARE").forEach { mode ->
-                        Text(
-                            mode,
-                            color = if (selectedMode == mode) Color.White else Color.White.copy(alpha = 0.4f),
-                            fontSize = if (selectedMode == mode) 14.sp else 12.sp,
-                            fontWeight = if (selectedMode == mode) FontWeight.Bold else FontWeight.Normal,
-                            modifier = Modifier.clickable { selectedMode = mode }
+                // Camera UI Bottom Bar
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp))
+                        .background(Color.Black.copy(alpha = 0.5f))
+                        .padding(bottom = 60.dp, top = 24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    // Zoom Switcher
+                    Row(
+                        modifier = Modifier
+                            .clip(CircleShape)
+                            .background(Color.White.copy(alpha = 0.1f))
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(24.dp)
+                    ) {
+                        Text("0.5", color = Color.White.copy(alpha = 0.5f), fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        Text("1x", color = BrandBlue, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        Text("3x", color = Color.White.copy(alpha = 0.5f), fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    }
+
+                    Spacer(modifier = Modifier.height(40.dp))
+
+                    // Shutter Row
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 48.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // Gallery Preview
+                        Box(
+                            modifier = Modifier
+                                .size(50.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .border(2.dp, Color.White.copy(alpha = 0.3f), RoundedCornerShape(12.dp))
+                        ) {
+                            Image(
+                                painter = painterResource("drawable/photo_sample.png"),
+                                contentDescription = null,
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop
+                            )
+                        }
+
+                        // Main Shutter Button
+                        Box(
+                            modifier = Modifier
+                                .size(84.dp)
+                                .clip(CircleShape)
+                                .border(4.dp, Brush.linearGradient(BrandGradientFull), CircleShape)
+                                .padding(8.dp)
+                                .clip(CircleShape)
+                                .background(Color.White)
+                                .clickable { 
+                                    sendLocalNotification("Moment Captured!", "Uploading to your shared album...")
+                                }
                         )
+
+                        // Flip Cam
+                        Surface(
+                            shape = CircleShape,
+                            color = Color.White.copy(alpha = 0.1f),
+                            modifier = Modifier.size(50.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) { IconFlip(Color.White, 24f) }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(32.dp))
+
+                    // Mode Selector
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(32.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        listOf("PORTRAIT", "PHOTO", "SQUARE").forEach { mode ->
+                            val isActive = selectedMode == mode
+                            Text(
+                                text = mode,
+                                modifier = Modifier.clickable { selectedMode = mode },
+                                style = MaterialTheme.typography.caption.copy(
+                                    color = if (isActive) BrandCoral else Color.White.copy(alpha = 0.5f),
+                                    fontWeight = if (isActive) FontWeight.Bold else FontWeight.Medium,
+                                    letterSpacing = 1.sp
+                                )
+                            )
+                        }
                     }
                 }
             }

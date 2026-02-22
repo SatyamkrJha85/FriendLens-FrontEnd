@@ -3,6 +3,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.runtime.*
@@ -10,6 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -34,133 +36,179 @@ class CreateJoinGroupScreen : Screen {
         var isSuccess by remember { mutableStateOf(false) }
         val scope = rememberCoroutineScope()
 
-        Column(modifier = Modifier.fillMaxSize().background(Color.White).padding(24.dp)) {
-            Spacer(Modifier.height(16.dp))
-            Text("Let's get\nstarted", fontSize = 36.sp, fontWeight = FontWeight.Bold, color = TextDark, lineHeight = 44.sp)
-            Spacer(Modifier.height(8.dp))
-            Text("Create a new collection or join friends.", fontSize = 15.sp, color = TextSecondary)
+        Column(modifier = Modifier.fillMaxSize().background(BackgroundLight).padding(24.dp)) {
+            Text("Collection\nCenter", style = MaterialTheme.typography.h1.copy(lineHeight = 40.sp))
+            Text("Create or join shared photo albums.", style = MaterialTheme.typography.body2)
+            
             Spacer(Modifier.height(32.dp))
 
+            // Premium Toggle
+            Surface(
+                modifier = Modifier.fillMaxWidth().height(60.dp),
+                shape = CircleShape,
+                color = Color.White,
+                elevation = 2.dp
+            ) {
+                Row(modifier = Modifier.fillMaxSize().padding(4.dp)) {
+                    val joinBg by animateColorAsState(if (isJoinMode) BrandBlue else Color.Transparent)
+                    val createBg by animateColorAsState(if (!isJoinMode) BrandPurple else Color.Transparent)
+
+                    Box(
+                        modifier = Modifier
+                            .weight(1f).fillMaxHeight().clip(CircleShape).background(joinBg)
+                            .clickable { isJoinMode = true; message = null },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            "Join Existing",
+                            style = MaterialTheme.typography.button.copy(
+                                color = if (isJoinMode) Color.White else TextDark,
+                                fontSize = 14.sp
+                            )
+                        )
+                    }
+                    Box(
+                        modifier = Modifier
+                            .weight(1f).fillMaxHeight().clip(CircleShape).background(createBg)
+                            .clickable { isJoinMode = false; message = null },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            "Create New",
+                            style = MaterialTheme.typography.button.copy(
+                                color = if (!isJoinMode) Color.White else TextDark,
+                                fontSize = 14.sp
+                            )
+                        )
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(32.dp))
+
+            // Form Area
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.large,
+                elevation = 4.dp
+            ) {
+                Column(modifier = Modifier.padding(24.dp)) {
+                    if (isJoinMode) {
+                        Text("Enter Invite Code", style = MaterialTheme.typography.h3)
+                        Text("Ask your friend for their 6-digit code.", style = MaterialTheme.typography.caption)
+                        Spacer(Modifier.height(24.dp))
+                        
+                        OutlinedTextField(
+                            value = joinCode,
+                            onValueChange = { if (it.length <= 6) joinCode = it.uppercase() },
+                            modifier = Modifier.fillMaxWidth(),
+                            textStyle = MaterialTheme.typography.h2.copy(textAlign = TextAlign.Center, letterSpacing = 8.sp),
+                            shape = MaterialTheme.shapes.medium,
+                            placeholder = { Text("FRIEND", modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center) },
+                            colors = TextFieldDefaults.outlinedTextFieldColors(focusedBorderColor = BrandBlue)
+                        )
+                    } else {
+                        Text("New Album Details", style = MaterialTheme.typography.h3)
+                        Spacer(Modifier.height(20.dp))
+                        OutlinedTextField(
+                            value = groupName, onValueChange = { groupName = it },
+                            label = { Text("Album Name") },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = MaterialTheme.shapes.medium,
+                            colors = TextFieldDefaults.outlinedTextFieldColors(focusedBorderColor = BrandPurple)
+                        )
+                        Spacer(Modifier.height(16.dp))
+                        OutlinedTextField(
+                            value = groupDesc, onValueChange = { groupDesc = it },
+                            label = { Text("Description (Optional)") },
+                            modifier = Modifier.fillMaxWidth().height(100.dp),
+                            shape = MaterialTheme.shapes.medium,
+                            colors = TextFieldDefaults.outlinedTextFieldColors(focusedBorderColor = BrandPurple)
+                        )
+                    }
+
+                    if (message != null) {
+                        Spacer(Modifier.height(16.dp))
+                        Text(
+                            text = message!!,
+                            color = if (isSuccess) SuccessGreen else ErrorRed,
+                            style = MaterialTheme.typography.caption.copy(fontWeight = FontWeight.Bold)
+                        )
+                    }
+
+                    Spacer(Modifier.height(32.dp))
+
+                    Button(
+                        onClick = {
+                            isLoading = true
+                            message = null
+                            scope.launch {
+                                try {
+                                    if (isJoinMode) {
+                                        val resp = FriendLensApi.joinGroup(JoinGroupRequest(joinCode))
+                                        if (resp.status == "success") {
+                                            isSuccess = true
+                                            message = "Welcome to ${resp.group?.name}!"
+                                            joinCode = ""
+                                        } else {
+                                            isSuccess = false; message = resp.message ?: "Invalid code"
+                                        }
+                                    } else {
+                                        val resp = FriendLensApi.createGroup(CreateGroupRequest(groupName, groupDesc))
+                                        if (resp.status == "success") {
+                                            isSuccess = true
+                                            message = "Created! Share code: ${resp.group?.joinCode}"
+                                            groupName = ""; groupDesc = ""
+                                        } else {
+                                            isSuccess = false; message = resp.message ?: "Failed"
+                                        }
+                                    }
+                                } catch (e: Exception) {
+                                    isSuccess = false; message = "Network Error"
+                                }
+                                isLoading = false
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth().height(56.dp).shadow(8.dp, MaterialTheme.shapes.large),
+                        shape = MaterialTheme.shapes.large,
+                        colors = ButtonDefaults.buttonColors(backgroundColor = if (isJoinMode) BrandBlue else BrandPurple),
+                        enabled = !isLoading && (if (isJoinMode) joinCode.length == 6 else groupName.isNotBlank())
+                    ) {
+                        if (isLoading) CircularProgressIndicator(
+                            color = Color.White,
+                            modifier = Modifier.size(20.dp),
+                            strokeWidth = 2.dp
+                        )
+                        else Text(if (isJoinMode) "Join Album" else "Create Now", style = MaterialTheme.typography.button)
+                    }
+                }
+            }
+            
+            Spacer(Modifier.weight(1f))
+            
+            // Decorative Element
             Box(
-                modifier = Modifier.fillMaxWidth().height(160.dp).shadow(6.dp, RoundedCornerShape(32.dp)).clip(RoundedCornerShape(32.dp)),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(140.dp)
+                    .clip(MaterialTheme.shapes.large)
+                    .background(Color.White),
                 contentAlignment = Alignment.Center
             ) {
-                Image(painter = painterResource("drawable/group_hero.png"), contentDescription = "Group", modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+                Image(
+                    painter = painterResource("drawable/group_hero.png"),
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop,
+                    alpha = 0.8f
+                )
+                Surface(
+                    color = Color.Black.copy(alpha = 0.4f),
+                    modifier = Modifier.fillMaxSize()
+                ) {}
+                Text("Better together.", style = MaterialTheme.typography.h2.copy(color = Color.White))
             }
-            Spacer(Modifier.height(32.dp))
-
-            // Toggle
-            Row(
-                modifier = Modifier.fillMaxWidth().height(56.dp).clip(RoundedCornerShape(28.dp)).background(CardBackground),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                val joinBg by animateColorAsState(if (isJoinMode) Color.White else Color.Transparent)
-                val createBg by animateColorAsState(if (!isJoinMode) Color.White else Color.Transparent)
-
-                Box(
-                    modifier = Modifier.weight(1f).fillMaxHeight().padding(4.dp).clip(RoundedCornerShape(24.dp))
-                        .shadow(if (isJoinMode) 2.dp else 0.dp, RoundedCornerShape(24.dp)).background(joinBg).clickable { isJoinMode = true },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        IconGroup(if (isJoinMode) BrandBlue else TextSecondary, 16f)
-                        Spacer(Modifier.width(6.dp))
-                        Text("Join Group", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = if (isJoinMode) TextDark else TextSecondary)
-                    }
-                }
-                Box(
-                    modifier = Modifier.weight(1f).fillMaxHeight().padding(4.dp).clip(RoundedCornerShape(24.dp))
-                        .shadow(if (!isJoinMode) 2.dp else 0.dp, RoundedCornerShape(24.dp)).background(createBg).clickable { isJoinMode = false },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        IconPlus(if (!isJoinMode) BrandPurple else TextSecondary, 16f)
-                        Spacer(Modifier.width(6.dp))
-                        Text("Create Group", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = if (!isJoinMode) TextDark else TextSecondary)
-                    }
-                }
-            }
-
-            Spacer(Modifier.weight(1f))
-
-            if (message != null) {
-                Box(
-                    modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
-                        .background(if (isSuccess) SuccessGreen.copy(alpha = 0.1f) else Color.Red.copy(alpha = 0.1f)).padding(12.dp)
-                ) { Text(message!!, color = if (isSuccess) SuccessGreen else Color.Red, fontSize = 13.sp, fontWeight = FontWeight.SemiBold) }
-                Spacer(Modifier.height(16.dp))
-            }
-
-            if (isJoinMode) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("Enter 6-character code", color = TextSecondary, fontSize = 14.sp)
-                    Spacer(Modifier.height(16.dp))
-                    OutlinedTextField(
-                        value = joinCode, onValueChange = { if (it.length <= 6) joinCode = it.uppercase() },
-                        modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp), singleLine = true,
-                        textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.Center, letterSpacing = 8.sp, fontSize = 22.sp, fontWeight = FontWeight.Bold),
-                        colors = TextFieldDefaults.outlinedTextFieldColors(focusedBorderColor = BrandBlue, unfocusedBorderColor = DividerColor),
-                        placeholder = { Text("X Y Z 1 2 3", Modifier.fillMaxWidth(), textAlign = TextAlign.Center, color = TextSecondary.copy(alpha = 0.4f)) }
-                    )
-                    Spacer(Modifier.height(24.dp))
-                    Button(
-                        onClick = {
-                            isLoading = true; message = null
-                            scope.launch {
-                                try {
-                                    val resp = FriendLensApi.joinGroup(JoinGroupRequest(joinCode))
-                                    if (resp.status == "success") { isSuccess = true; message = "Joined: ${resp.group?.name ?: "group"}!"; sendLocalNotification("You joined a group!", "Start sharing photos now.") }
-                                    else { isSuccess = false; message = resp.message ?: "Invalid join code" }
-                                } catch (e: Exception) { isSuccess = false; message = "Error: ${e.message}" }
-                                isLoading = false
-                            }
-                        },
-                        modifier = Modifier.fillMaxWidth().height(56.dp), shape = RoundedCornerShape(28.dp),
-                        colors = ButtonDefaults.buttonColors(backgroundColor = TextDark),
-                        elevation = ButtonDefaults.elevation(defaultElevation = 6.dp),
-                        enabled = joinCode.length == 6 && !isLoading
-                    ) {
-                        if (isLoading) CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
-                        else Text("Join Group", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                    }
-                }
-            } else {
-                Column {
-                    OutlinedTextField(
-                        value = groupName, onValueChange = { groupName = it }, label = { Text("Group Name") },
-                        modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp), singleLine = true,
-                        colors = TextFieldDefaults.outlinedTextFieldColors(focusedBorderColor = BrandPurple, unfocusedBorderColor = DividerColor, focusedLabelColor = BrandPurple)
-                    )
-                    Spacer(Modifier.height(16.dp))
-                    OutlinedTextField(
-                        value = groupDesc, onValueChange = { groupDesc = it }, label = { Text("Description") },
-                        modifier = Modifier.fillMaxWidth().height(100.dp), shape = RoundedCornerShape(16.dp),
-                        colors = TextFieldDefaults.outlinedTextFieldColors(focusedBorderColor = BrandPurple, unfocusedBorderColor = DividerColor, focusedLabelColor = BrandPurple)
-                    )
-                    Spacer(Modifier.height(24.dp))
-                    Button(
-                        onClick = {
-                            isLoading = true; message = null
-                            scope.launch {
-                                try {
-                                    val resp = FriendLensApi.createGroup(CreateGroupRequest(groupName, groupDesc))
-                                    if (resp.status == "success") { isSuccess = true; message = "Created! Code: ${resp.group?.joinCode}"; sendLocalNotification("Group Created!", "Share code ${resp.group?.joinCode} with friends."); groupName = ""; groupDesc = "" }
-                                    else { isSuccess = false; message = resp.message ?: "Failed to create" }
-                                } catch (e: Exception) { isSuccess = false; message = "Error: ${e.message}" }
-                                isLoading = false
-                            }
-                        },
-                        modifier = Modifier.fillMaxWidth().height(56.dp), shape = RoundedCornerShape(28.dp),
-                        colors = ButtonDefaults.buttonColors(backgroundColor = BrandPurple),
-                        elevation = ButtonDefaults.elevation(defaultElevation = 6.dp),
-                        enabled = groupName.isNotBlank() && !isLoading
-                    ) {
-                        if (isLoading) CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
-                        else Text("Create Group", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                    }
-                }
-            }
-            Spacer(Modifier.height(32.dp))
+            Spacer(Modifier.height(24.dp))
         }
     }
 }
