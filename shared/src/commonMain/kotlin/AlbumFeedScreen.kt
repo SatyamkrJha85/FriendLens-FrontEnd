@@ -66,31 +66,31 @@ class AlbumFeedScreen : Screen {
             }
         }
 
-        Column(modifier = Modifier.fillMaxSize().background(BackgroundLight)) {
-            // Group Selection Header
-            Surface(elevation = 4.dp, shape = RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp), color = Color.White) {
-                Column(modifier = Modifier.padding(bottom = 16.dp)) {
-                    Spacer(Modifier.height(16.dp))
+        Column(modifier = Modifier.fillMaxSize().background(Color.White)) {
+            // Group Tabs
+            Surface(elevation = 2.dp, color = Color.White) {
+                Column(modifier = Modifier.padding(vertical = 16.dp)) {
                     LazyRow(
                         contentPadding = PaddingValues(horizontal = 24.dp),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         items(groups) { group ->
                             val isSelected = group.id == selectedGroupId
-                            Surface(
+                            Column(
                                 modifier = Modifier.clickable { selectedGroupId = group.id },
-                                shape = MaterialTheme.shapes.medium,
-                                color = if (isSelected) BrandBlue else BackgroundLight,
-                                elevation = if (isSelected) 4.dp else 0.dp
+                                horizontalAlignment = Alignment.CenterHorizontally
                             ) {
                                 Text(
                                     text = group.name,
-                                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp),
-                                    style = MaterialTheme.typography.body2.copy(
-                                        color = if (isSelected) Color.White else TextSecondary,
-                                        fontWeight = FontWeight.Bold
+                                    style = MaterialTheme.typography.body1.copy(
+                                        color = if (isSelected) TextDark else TextSecondary,
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
                                     )
                                 )
+                                if (isSelected) {
+                                    Box(Modifier.padding(top = 4.dp).size(6.dp).clip(CircleShape).background(BrandBlue))
+                                }
                             }
                         }
                     }
@@ -101,66 +101,61 @@ class AlbumFeedScreen : Screen {
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(bottom = 120.dp)
             ) {
-                // Share Code Hero Section
+                // Join Code Hero - Matching Mockup (Red/Coral Card)
                 item {
                     val activeGroup = groups.find { it.id == selectedGroupId }
                     if (activeGroup != null) {
                         Card(
-                            modifier = Modifier.padding(24.dp).fillMaxWidth().height(100.dp),
-                            shape = MaterialTheme.shapes.large,
+                            modifier = Modifier.padding(24.dp).fillMaxWidth(),
+                            shape = MaterialTheme.shapes.medium,
                             elevation = 8.dp
                         ) {
-                            Box(modifier = Modifier.background(Brush.horizontalGradient(BrandGradient)).padding(20.dp)) {
+                            Box(
+                                modifier = Modifier
+                                    .background(brush = Brush.linearGradient(listOf(BrandCoral, BrandPink)))
+                                    .padding(vertical = 12.dp, horizontal = 20.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
                                 Row(
-                                    modifier = Modifier.fillMaxSize(),
+                                    modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Column {
-                                        Text("JOIN CODE", style = MaterialTheme.typography.caption.copy(color = Color.White.copy(alpha = 0.8f), letterSpacing = 2.sp))
-                                        Text(activeGroup.joinCode, style = MaterialTheme.typography.h2.copy(color = Color.White, letterSpacing = 4.sp))
+                                        Text("JOIN ALBUM", style = MaterialTheme.typography.caption.copy(color = Color.White.copy(alpha = 0.8f), letterSpacing = 2.sp))
+                                        Text(activeGroup.joinCode, style = MaterialTheme.typography.h2.copy(color = Color.White, letterSpacing = 4.sp, fontSize = 28.sp))
                                     }
-                                    Button(
-                                        onClick = { },
-                                        shape = CircleShape,
-                                        colors = ButtonDefaults.buttonColors(backgroundColor = Color.White.copy(alpha = 0.2f)),
-                                        elevation = null
-                                    ) {
-                                        IconShare(Color.White, 20f)
-                                    }
+                                    IconShare(Color.White, 20f)
                                 }
                             }
                         }
                     }
                 }
 
+                item {
+                    Text(
+                        "My Moments",
+                        style = MaterialTheme.typography.h3,
+                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
+                    )
+                }
+
                 if (isLoading) {
-                    item { Box(Modifier.fillMaxWidth().padding(40.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = BrandBlue) } }
+                    item { Box(Modifier.fillMaxWidth().padding(40.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = BrandBlue, strokeWidth = 3.dp) } }
                 } else if (photos.isEmpty()) {
                     item {
                         Column(
                             modifier = Modifier.fillMaxWidth().padding(vertical = 60.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Image(painter = painterResource("drawable/empty_album.png"), contentDescription = null, modifier = Modifier.size(180.dp).alpha(0.6f))
-                            Spacer(Modifier.height(24.dp))
-                            Text("No memories yet", style = MaterialTheme.typography.h3)
-                            Text("Share the first photo in this album.", style = MaterialTheme.typography.body2)
+                            IconAlbum(TextSecondary.copy(alpha = 0.3f), 80f)
+                            Spacer(Modifier.height(16.dp))
+                            Text("No memories caught here", style = MaterialTheme.typography.body2)
                         }
                     }
                 } else {
                     items(photos) { photo ->
-                        PhotoFeedItem(
-                            groupId = selectedGroupId ?: "",
-                            photo = photo,
-                            onLike = { 
-                                scope.launch {
-                                    try { 
-                                        FriendLensApi.likePhoto(selectedGroupId ?: "", photo.id)
-                                    } catch (_: Exception) {}
-                                }
-                            }
-                        )
+                        PhotoFeedItem(photo)
                     }
                 }
             }
@@ -170,80 +165,48 @@ class AlbumFeedScreen : Screen {
 
 @OptIn(ExperimentalResourceApi::class)
 @Composable
-fun PhotoFeedItem(groupId: String, photo: Photo, onLike: () -> Unit) {
-    var isLiked by remember { mutableStateOf(false) }
-    var likesCount by remember { mutableStateOf(0) }
-
+fun PhotoFeedItem(photo: Photo) {
     Card(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 12.dp),
-        shape = MaterialTheme.shapes.large,
-        elevation = 2.dp
+        shape = MaterialTheme.shapes.medium,
+        elevation = 4.dp
     ) {
         Column {
-            // Header
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Surface(
-                    shape = CircleShape,
-                    color = BrandGradient[(photo.uploadedByUsername?.length ?: 0) % BrandGradient.size].copy(alpha = 0.2f),
-                    modifier = Modifier.size(40.dp)
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Text(
-                            text = photo.uploadedByUsername?.firstOrNull()?.uppercase() ?: "U",
-                            style = MaterialTheme.typography.h3.copy(fontSize = 14.sp, color = BrandBlue)
-                        )
-                    }
-                }
-                Spacer(Modifier.width(12.dp))
-                Column {
-                    Text(photo.uploadedByUsername ?: "Unknown", style = MaterialTheme.typography.h3.copy(fontSize = 15.sp))
-                    Text(photo.uploadedAt?.take(16) ?: "Just now", style = MaterialTheme.typography.caption)
-                }
-                Spacer(Modifier.weight(1f))
-                IconMore(TextSecondary, 18f)
-            }
-
-            // Image
-            Box(
-                modifier = Modifier.fillMaxWidth().height(280.dp).background(CardBackground)
-            ) {
+            // Content
+            Box(modifier = Modifier.fillMaxWidth().height(300.dp)) {
                 Image(
                     painter = painterResource("drawable/photo_sample.png"),
                     contentDescription = null,
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop
                 )
+                // Uploader Initial Overlay - Professional look
+                Box(
+                    modifier = Modifier.align(Alignment.TopStart).padding(16.dp).size(36.dp)
+                        .clip(CircleShape).background(Color.White.copy(alpha = 0.9f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        photo.uploadedByUsername?.firstOrNull()?.toString()?.uppercase() ?: "U",
+                        style = MaterialTheme.typography.caption.copy(fontWeight = FontWeight.Bold, color = BrandPurple)
+                    )
+                }
             }
 
-            // Actions
+            // Stats / Info
             Row(
                 modifier = Modifier.fillMaxWidth().padding(16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
-                    Row(
-                        modifier = Modifier.clickable { 
-                            isLiked = !isLiked
-                            likesCount += if (isLiked) 1 else -1
-                            onLike()
-                        },
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        IconHeart(if (isLiked) BrandPink else TextSecondary, filled = isLiked, size = 24f)
-                        Spacer(Modifier.width(6.dp))
-                        Text(text = "$likesCount", style = MaterialTheme.typography.h3.copy(fontSize = 14.sp))
-                    }
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        IconComment(TextSecondary, 22f)
-                        Spacer(Modifier.width(6.dp))
-                        Text(text = "12", style = MaterialTheme.typography.h3.copy(fontSize = 14.sp))
-                    }
-                }
-                IconShare(TextSecondary, 22f)
+                IconHeart(BrandPink, filled = true, size = 20f)
+                Spacer(Modifier.width(8.dp))
+                Text("24", style = MaterialTheme.typography.caption.copy(fontWeight = FontWeight.Bold))
+                Spacer(Modifier.width(20.dp))
+                IconComment(TextSecondary, 18f)
+                Spacer(Modifier.width(8.dp))
+                Text("5", style = MaterialTheme.typography.caption)
+                Spacer(Modifier.weight(1f))
+                Text(photo.uploadedAt?.take(10) ?: "Today", style = MaterialTheme.typography.caption)
             }
         }
     }

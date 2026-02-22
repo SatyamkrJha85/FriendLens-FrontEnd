@@ -1,7 +1,9 @@
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.runtime.*
@@ -34,34 +36,29 @@ class LoginScreen : Screen {
         val navigator = LocalNavigator.currentOrThrow
         val scope = rememberCoroutineScope()
 
-        Column(modifier = Modifier.fillMaxSize().background(BackgroundLight)) {
-            // Header Section with Gradient
+        Column(modifier = Modifier.fillMaxSize().background(Color.White)) {
+            // Header Image (matching mockup)
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(260.dp)
-                    .clip(RoundedCornerShape(bottomStart = 48.dp, bottomEnd = 48.dp))
-                    .background(brush = Brush.linearGradient(BrandGradient)),
-                contentAlignment = Alignment.Center
+                    .height(300.dp)
             ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Surface(
-                        modifier = Modifier.size(90.dp),
-                        shape = RoundedCornerShape(24.dp),
-                        color = Color.White.copy(alpha = 0.2f),
-                        elevation = 0.dp
-                    ) {
-                        Image(
-                            painter = painterResource("drawable/app_icon.png"),
-                            contentDescription = null,
-                            modifier = Modifier.fillMaxSize().padding(12.dp).clip(RoundedCornerShape(16.dp)),
-                            contentScale = ContentScale.Crop
+                Image(
+                    painter = painterResource("drawable/onboarding_celebration.png"), // Using an existing relevant image
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            brush = Brush.verticalGradient(
+                                colors = listOf(Color.Transparent, Color.White),
+                                startY = 100f
+                            )
                         )
-                    }
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text("FriendLens", style = MaterialTheme.typography.h2.copy(color = Color.White))
-                    Text("Capture your moments together", style = MaterialTheme.typography.caption.copy(color = Color.White.copy(alpha = 0.8f)))
-                }
+                )
             }
 
             Column(
@@ -70,22 +67,27 @@ class LoginScreen : Screen {
                     .padding(horizontal = 32.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Spacer(modifier = Modifier.height(40.dp))
-                Text("Welcome Back", style = MaterialTheme.typography.h2)
-                Text("Sign in to your account", style = MaterialTheme.typography.body2)
-                
-                Spacer(modifier = Modifier.height(32.dp))
+                Text(
+                    text = "FriendLens",
+                    style = MaterialTheme.typography.h1.copy(fontSize = 32.sp),
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                Text(
+                    text = "All moments. One place.",
+                    style = MaterialTheme.typography.body2,
+                    modifier = Modifier.padding(bottom = 32.dp)
+                )
 
                 OutlinedTextField(
                     value = email, onValueChange = { email = it },
-                    label = { Text("Email Address") },
+                    label = { Text("Email") },
+                    placeholder = { Text("you@example.com") },
                     modifier = Modifier.fillMaxWidth(),
                     shape = MaterialTheme.shapes.medium,
                     singleLine = true,
                     colors = TextFieldDefaults.outlinedTextFieldColors(
                         focusedBorderColor = BrandBlue,
-                        unfocusedBorderColor = DividerColor,
-                        backgroundColor = Color.White
+                        unfocusedBorderColor = DividerColor
                     )
                 )
                 
@@ -100,14 +102,19 @@ class LoginScreen : Screen {
                     singleLine = true,
                     colors = TextFieldDefaults.outlinedTextFieldColors(
                         focusedBorderColor = BrandBlue,
-                        unfocusedBorderColor = DividerColor,
-                        backgroundColor = Color.White
+                        unfocusedBorderColor = DividerColor
                     )
                 )
 
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    Text("Forgot Password?", style = MaterialTheme.typography.caption.copy(color = BrandCoral))
+                }
+
                 if (errorMsg != null) {
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text(errorMsg!!, color = ErrorRed, style = MaterialTheme.typography.caption)
+                    Text(errorMsg!!, color = ErrorRed, style = MaterialTheme.typography.caption, modifier = Modifier.padding(top = 12.dp))
                 }
 
                 Spacer(modifier = Modifier.height(32.dp))
@@ -148,32 +155,64 @@ class LoginScreen : Screen {
                             }
                         }
                     },
-                    modifier = Modifier.fillMaxWidth().height(56.dp).shadow(8.dp, MaterialTheme.shapes.large),
-                    shape = MaterialTheme.shapes.large,
-                    colors = ButtonDefaults.buttonColors(backgroundColor = TextDark),
+                    modifier = Modifier.fillMaxWidth().height(56.dp).shadow(8.dp, CircleShape),
+                    shape = CircleShape,
+                    colors = ButtonDefaults.buttonColors(backgroundColor = Color.Transparent),
+                    contentPadding = PaddingValues(0.dp),
                     enabled = !isLoading
                 ) {
-                    if (isLoading) CircularProgressIndicator(color = Color.White, modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
-                    else Text("Sign In", style = MaterialTheme.typography.button)
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(brush = Brush.linearGradient(listOf(BrandCoral, BrandPink))),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (isLoading) CircularProgressIndicator(color = Color.White, modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                        else Text("Sign In", style = MaterialTheme.typography.button)
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
+                Text("OR CONTINUE WITH", style = MaterialTheme.typography.caption.copy(letterSpacing = 1.sp))
+                Spacer(modifier = Modifier.height(16.dp))
 
+                // Social Icons matching mockup
+                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    SocialButton("drawable/onboarding_celebration.png") // Placeholder for Google
+                    SocialButton("drawable/onboarding_capture.png") // Placeholder for Apple
+                }
+
+                Spacer(modifier = Modifier.height(32.dp))
                 Row {
                     Text("Don't have an account? ", style = MaterialTheme.typography.body2)
                     Text(
                         "Sign Up",
                         modifier = Modifier.clickable { navigator.push(SignupScreen()) },
-                        style = MaterialTheme.typography.body2.copy(color = BrandBlue, fontWeight = FontWeight.Bold)
+                        style = MaterialTheme.typography.body2.copy(color = BrandCoral, fontWeight = FontWeight.Bold)
                     )
                 }
+            }
+        }
+    }
+
+    @Composable
+    fun SocialButton(iconRes: String) {
+        Surface(
+            modifier = Modifier.size(48.dp),
+            shape = CircleShape,
+            color = Color.White,
+            border = BorderStroke(1.dp, DividerColor),
+            elevation = 2.dp
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                // In a real app we'd use social icons, here placeholders
+                Box(Modifier.size(20.dp).background(Color(0xFFEEEEEE), CircleShape))
             }
         }
     }
 }
 
 class SignupScreen : Screen {
-    @OptIn(ExperimentalResourceApi::class)
     @Composable
     override fun Content() {
         var username by remember { mutableStateOf("") }
@@ -184,7 +223,7 @@ class SignupScreen : Screen {
         val navigator = LocalNavigator.currentOrThrow
         val scope = rememberCoroutineScope()
 
-        Column(modifier = Modifier.fillMaxSize().background(BackgroundLight)) {
+        Column(modifier = Modifier.fillMaxSize().background(Color.White)) {
             Box(
                 modifier = Modifier.fillMaxWidth().padding(top = 48.dp, start = 24.dp)
             ) {
@@ -195,7 +234,6 @@ class SignupScreen : Screen {
                 modifier = Modifier.fillMaxSize().padding(horizontal = 32.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Spacer(modifier = Modifier.height(24.dp))
                 Text("Create Account", style = MaterialTheme.typography.h1)
                 Text("Start your journey with friends", style = MaterialTheme.typography.body2)
                 
@@ -271,13 +309,19 @@ class SignupScreen : Screen {
                             }
                         }
                     },
-                    modifier = Modifier.fillMaxWidth().height(56.dp).shadow(8.dp, MaterialTheme.shapes.large),
-                    shape = MaterialTheme.shapes.large,
-                    colors = ButtonDefaults.buttonColors(backgroundColor = BrandPurple),
+                    modifier = Modifier.fillMaxWidth().height(60.dp).shadow(12.dp, CircleShape),
+                    shape = CircleShape,
+                    colors = ButtonDefaults.buttonColors(backgroundColor = Color.Transparent),
+                    contentPadding = PaddingValues(0.dp),
                     enabled = !isLoading
                 ) {
-                    if (isLoading) CircularProgressIndicator(color = Color.White, modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
-                    else Text("Get Started", style = MaterialTheme.typography.button)
+                    Box(
+                        modifier = Modifier.fillMaxSize().background(brush = Brush.linearGradient(listOf(BrandBlue, BrandPurple))),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (isLoading) CircularProgressIndicator(color = Color.White, modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                        else Text("Get Started", style = MaterialTheme.typography.button)
+                    }
                 }
             }
         }

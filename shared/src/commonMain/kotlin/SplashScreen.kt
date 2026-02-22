@@ -31,7 +31,7 @@ class SplashScreen : Screen {
     @Composable
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
-        val scale = remember { Animatable(0.7f) }
+        val scale = remember { Animatable(0.8f) }
         val alpha = remember { Animatable(0f) }
 
         LaunchedEffect(Unit) {
@@ -45,10 +45,10 @@ class SplashScreen : Screen {
                 )
             }
             launch {
-                alpha.animateTo(1f, tween(1200, easing = FastOutSlowInEasing))
+                alpha.animateTo(1f, tween(1000, easing = FastOutSlowInEasing))
             }
 
-            delay(2800)
+            delay(2500)
             
             if (SessionManager.session.isLoggedIn) {
                 navigator.replaceAll(MainDashboardScreen())
@@ -60,20 +60,33 @@ class SplashScreen : Screen {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(brush = Brush.verticalGradient(listOf(Color(0xFF0F172A), Color(0xFF1E293B)))),
+                .background(Color.White),
             contentAlignment = Alignment.Center
         ) {
+            // Subtle Background Gradient element
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .offset(x = 100.dp, y = (-100).dp)
+                    .size(300.dp)
+                    .background(
+                        brush = Brush.radialGradient(
+                            listOf(BrandBlue.copy(alpha = 0.1f), Color.Transparent)
+                        )
+                    )
+            )
+
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.scale(scale.value).alpha(alpha.value)
             ) {
-                // Branded Icon Container
+                // Branded Icon Container with Shadow-like depth
                 Box(
                     modifier = Modifier
-                        .size(160.dp)
-                        .clip(RoundedCornerShape(40.dp))
-                        .background(Color.White.copy(alpha = 0.05f))
-                        .padding(16.dp),
+                        .size(120.dp)
+                        .clip(RoundedCornerShape(32.dp))
+                        .background(Color.White)
+                        .padding(8.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Image(
@@ -81,54 +94,46 @@ class SplashScreen : Screen {
                         contentDescription = "FriendLens Logo",
                         modifier = Modifier
                             .fillMaxSize()
-                            .clip(RoundedCornerShape(32.dp)),
+                            .clip(RoundedCornerShape(24.dp)),
                         contentScale = ContentScale.Crop
                     )
                 }
 
-                Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(24.dp))
 
                 Text(
                     text = "FriendLens",
                     style = MaterialTheme.typography.h1.copy(
-                        color = Color.White,
-                        fontSize = 42.sp,
+                        color = TextDark,
+                        fontSize = 36.sp,
                         letterSpacing = (-1).sp
                     )
                 )
 
                 Text(
-                    text = "ALL MOMENTS. ONE PLACE.",
+                    text = "MEMORIES SHARED BETTER",
                     style = MaterialTheme.typography.caption.copy(
-                        color = BrandCoral,
+                        color = BrandPurple,
                         fontWeight = FontWeight.Bold,
-                        letterSpacing = 4.sp
+                        letterSpacing = 2.sp
                     )
                 )
             }
             
-            // Modern Dot Loader
+            // Minimal Loader
             Box(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
-                    .padding(bottom = 80.dp)
+                    .padding(bottom = 60.dp)
             ) {
                 val infiniteTransition = rememberInfiniteTransition()
-                val dotYOffset by infiniteTransition.animateFloat(
-                    initialValue = 0f,
-                    targetValue = -12f,
-                    animationSpec = infiniteRepeatable(
-                        animation = tween(600, easing = FastOutSlowInEasing),
-                        repeatMode = RepeatMode.Reverse
-                    )
-                )
                 
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                     BrandGradientFull.forEachIndexed { index, color ->
                         val delay = index * 100
-                        val animatedOffset by infiniteTransition.animateFloat(
-                            initialValue = 0f,
-                            targetValue = -10f,
+                        val animatedAlpha by infiniteTransition.animateFloat(
+                            initialValue = 0.3f,
+                            targetValue = 1f,
                             animationSpec = infiniteRepeatable(
                                 animation = tween(600, delayMillis = delay, easing = FastOutSlowInEasing),
                                 repeatMode = RepeatMode.Reverse
@@ -136,8 +141,8 @@ class SplashScreen : Screen {
                         )
                         Box(
                             modifier = Modifier
-                                .size(10.dp)
-                                .offset(y = animatedOffset.dp)
+                                .size(8.dp)
+                                .alpha(animatedAlpha)
                                 .clip(CircleShape)
                                 .background(color)
                         )

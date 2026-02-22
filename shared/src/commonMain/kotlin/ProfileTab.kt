@@ -29,125 +29,77 @@ fun ProfileTab() {
     val session = SessionManager.session
 
     LazyColumn(
-        modifier = Modifier.fillMaxSize().background(BackgroundLight),
+        modifier = Modifier.fillMaxSize().background(Color.White),
         contentPadding = PaddingValues(24.dp)
     ) {
         item {
-            Row(
+            Column(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text("Account", style = MaterialTheme.typography.h2)
-                Surface(shape = CircleShape, color = Color.White, modifier = Modifier.size(40.dp).shadow(2.dp, CircleShape)) {
-                    Box(contentAlignment = Alignment.Center) { IconSettings(TextDark, 20f) }
-                }
-            }
-            Spacer(Modifier.height(32.dp))
-        }
-
-        // Profile Card
-        item {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = MaterialTheme.shapes.large,
-                elevation = 2.dp
-            ) {
-                Column(
-                    modifier = Modifier.padding(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                // Profile Avatar from Mockup
+                Box(
+                    modifier = Modifier
+                        .size(100.dp)
+                        .clip(CircleShape)
+                        .background(BackgroundLight),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(110.dp)
-                            .shadow(12.dp, CircleShape)
-                            .clip(CircleShape)
-                            .background(Brush.sweepGradient(BrandGradientFull)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Surface(
-                            modifier = Modifier.size(96.dp),
-                            shape = CircleShape,
-                            color = Color.White
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Text(
-                                    text = session.username?.firstOrNull()?.uppercase() ?: "U",
-                                    style = MaterialTheme.typography.h1.copy(color = BrandPurple, fontSize = 40.sp)
-                                )
-                            }
-                        }
-                    }
-                    
-                    Spacer(Modifier.height(20.dp))
-                    Text(session.username ?: "Anonymous User", style = MaterialTheme.typography.h2)
-                    Text(session.email ?: "no-email@friendlens.app", style = MaterialTheme.typography.body2)
-                    
-                    Spacer(Modifier.height(32.dp))
-                    
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceEvenly
-                    ) {
-                        ProfileStat("12", "ALBUMS")
-                        VerticalDivider()
-                        ProfileStat("148", "PHOTOS")
-                        VerticalDivider()
-                        ProfileStat("4.8", "STARS")
-                    }
+                    Text(
+                        session.username?.firstOrNull()?.toString()?.uppercase() ?: "U",
+                        style = MaterialTheme.typography.h1.copy(fontSize = 32.sp, color = BrandPurple)
+                    )
+                }
+                
+                Spacer(Modifier.height(16.dp))
+                Text(session.username ?: "Alex Morgan", style = MaterialTheme.typography.h2)
+                Text("Photography Enthusiast", style = MaterialTheme.typography.caption)
+                
+                Spacer(Modifier.height(32.dp))
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    ProfileStat("124", "MOMENTS")
+                    ProfileStat("858", "LIKED")
+                    ProfileStat("4.9", "RATING")
                 }
             }
-            Spacer(Modifier.height(32.dp))
+            Spacer(Modifier.height(48.dp))
         }
 
-        // Feedback Section
+        // Feedback Section matching mockup style
         item {
-            Text("TELL US ANYTHING", style = MaterialTheme.typography.caption.copy(letterSpacing = 2.sp, fontWeight = FontWeight.Bold))
-            Spacer(Modifier.height(16.dp))
-            Card(
+            Surface(
                 modifier = Modifier.fillMaxWidth(),
-                shape = MaterialTheme.shapes.large,
-                elevation = 2.dp
+                shape = MaterialTheme.shapes.medium,
+                color = BackgroundLight
             ) {
                 Column(modifier = Modifier.padding(24.dp)) {
-                    Text("How are we doing?", style = MaterialTheme.typography.h3)
-                    Spacer(Modifier.height(16.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        IconComment(BrandCoral, 20f)
+                        Spacer(Modifier.width(8.dp))
+                        Text("Leave Feedback", style = MaterialTheme.typography.h3.copy(fontSize = 16.sp))
+                    }
+                    Spacer(Modifier.height(8.dp))
+                    Text("How was your experience collaborating with your friends on our trip?", style = MaterialTheme.typography.body2)
+                    
+                    Spacer(Modifier.height(20.dp))
                     
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                         repeat(5) { index ->
                             val rating = index + 1
                             val isSelected = selectedRating >= rating
-                            Surface(
-                                shape = CircleShape,
-                                color = if (isSelected) BrandGradientFull[index].copy(alpha = 0.1f) else BackgroundLight,
-                                modifier = Modifier.size(48.dp).clickable { selectedRating = rating }
-                            ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    IconHeart(
-                                        color = if (isSelected) BrandGradientFull[index] else DividerColor,
-                                        filled = isSelected,
-                                        size = 24f
-                                    )
-                                }
-                            }
+                            IconHeart(
+                                color = if (isSelected) BrandCoral else DividerColor,
+                                filled = isSelected,
+                                size = 28f,
+                                modifier = Modifier.clickable { selectedRating = rating }
+                            )
                         }
                     }
                     
-                    Spacer(Modifier.height(24.dp))
-                    
-                    OutlinedTextField(
-                        value = feedbackText, onValueChange = { feedbackText = it },
-                        modifier = Modifier.fillMaxWidth().height(120.dp),
-                        placeholder = { Text("Your thoughts here...", style = MaterialTheme.typography.body2) },
-                        shape = MaterialTheme.shapes.medium,
-                        colors = TextFieldDefaults.outlinedTextFieldColors(focusedBorderColor = BrandBlue)
-                    )
-                    
-                    if (feedbackMsg != null) {
-                        Spacer(Modifier.height(8.dp))
-                        Text(feedbackMsg!!, color = SuccessGreen, style = MaterialTheme.typography.caption)
-                    }
-
                     Spacer(Modifier.height(24.dp))
                     
                     Button(
@@ -155,52 +107,65 @@ fun ProfileTab() {
                             isSubmitting = true
                             scope.launch {
                                 try {
-                                    val resp = FriendLensApi.submitFeedback(FeedbackRequest(content = feedbackText, rating = selectedRating.toString()))
-                                    if (resp.status == "success") {
-                                        feedbackMsg = "Feedback sent. Thank you!"
-                                        feedbackText = ""; selectedRating = 0
-                                    }
-                                } catch (_: Exception) {
-                                    feedbackMsg = "Failed to send."
-                                }
+                                    FriendLensApi.submitFeedback(FeedbackRequest(content = feedbackText, rating = selectedRating.toString()))
+                                    feedbackMsg = "Sent! Thanks."
+                                } catch (_: Exception) {}
                                 isSubmitting = false
                             }
                         },
-                        modifier = Modifier.fillMaxWidth().height(52.dp),
-                        shape = MaterialTheme.shapes.large,
-                        colors = ButtonDefaults.buttonColors(backgroundColor = BrandBlue),
-                        enabled = !isSubmitting && feedbackText.isNotBlank() && selectedRating > 0
+                        modifier = Modifier.fillMaxWidth().height(50.dp).shadow(4.dp, CircleShape),
+                        shape = CircleShape,
+                        colors = ButtonDefaults.buttonColors(backgroundColor = BrandCoral),
+                        enabled = !isSubmitting && selectedRating > 0
                     ) {
                         if (isSubmitting) CircularProgressIndicator(color = Color.White, modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
-                        else Text("Submit Feedback", style = MaterialTheme.typography.button)
+                        else Text("Submit Review", style = MaterialTheme.typography.button)
                     }
                 }
             }
-            Spacer(Modifier.height(32.dp))
+            Spacer(Modifier.height(48.dp))
         }
 
         item {
-            OutlinedButton(
+            Text("Recent Activity", style = MaterialTheme.typography.h3.copy(fontSize = 16.sp))
+            Spacer(Modifier.height(16.dp))
+            ActivityItem("Added 5 photos", "Summer Festival '23", "2h ago", BrandBlue)
+            ActivityItem("Joined Group", "Mountain Trip", "3h ago", BrandPurple)
+            ActivityItem("Liked 12 photos", "Party Night", "1d ago", BrandPink)
+            
+            Spacer(Modifier.height(48.dp))
+            
+            TextButton(
                 onClick = { SessionManager.logout() },
-                modifier = Modifier.fillMaxWidth().height(56.dp).padding(bottom = 32.dp),
-                shape = MaterialTheme.shapes.large,
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = BrandCoral)
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Sign Out", style = MaterialTheme.typography.button.copy(color = BrandCoral))
+                Text("Sign Out", color = BrandCoral, fontWeight = FontWeight.Bold)
             }
+            Spacer(modifier = Modifier.height(100.dp))
         }
+    }
+}
+
+@Composable
+fun ActivityItem(title: String, group: String, time: String, color: Color) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(color))
+        Spacer(Modifier.width(16.dp))
+        Column(Modifier.weight(1f)) {
+            Text(title, style = MaterialTheme.typography.body1.copy(fontWeight = FontWeight.Bold, fontSize = 14.sp))
+            Text(group, style = MaterialTheme.typography.body2.copy(fontSize = 12.sp))
+        }
+        Text(time, style = MaterialTheme.typography.caption)
     }
 }
 
 @Composable
 fun ProfileStat(value: String, label: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(value, style = MaterialTheme.typography.h2)
-        Text(label, style = MaterialTheme.typography.caption.copy(letterSpacing = 1.sp))
+        Text(value, style = MaterialTheme.typography.h2.copy(fontSize = 20.sp))
+        Text(label, style = MaterialTheme.typography.caption.copy(letterSpacing = 1.sp, fontSize = 10.sp))
     }
-}
-
-@Composable
-fun VerticalDivider() {
-    Box(modifier = Modifier.width(1.dp).height(40.dp).background(DividerColor))
 }

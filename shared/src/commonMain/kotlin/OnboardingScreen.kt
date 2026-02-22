@@ -58,9 +58,9 @@ class OnboardingScreen : Screen {
         )
 
         val bgColors = listOf(
-            Color(0xFF0F172A),
-            Color(0xFF1E1B4B),
-            Color(0xFF312E81)
+            Color(0xFFF0F7FF), // Soft blue
+            Color(0xFFF5F3FF), // Soft purple
+            Color(0xFFFFF1F2)  // Soft pink/rose
         )
         val backgroundColor by animateColorAsState(bgColors[pagerState.currentPage], tween(600))
 
@@ -71,12 +71,12 @@ class OnboardingScreen : Screen {
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
                 // Top skip button
-                Box(modifier = Modifier.fillMaxWidth().padding(24.dp)) {
+                Box(modifier = Modifier.fillMaxWidth().padding(top = 24.dp, end = 24.dp)) {
                     TextButton(
                         onClick = { navigator.push(LoginScreen()) },
                         modifier = Modifier.align(Alignment.CenterEnd)
                     ) {
-                        Text("Skip", color = Color.White.copy(alpha = 0.5f), style = MaterialTheme.typography.body2)
+                        Text("Skip", color = TextSecondary, style = MaterialTheme.typography.body2)
                     }
                 }
 
@@ -89,18 +89,18 @@ class OnboardingScreen : Screen {
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center
                     ) {
-                        Box(
+                        Surface(
                             modifier = Modifier
                                 .aspectRatio(1f)
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(48.dp))
-                                .background(Color.White.copy(alpha = 0.05f)),
-                            contentAlignment = Alignment.Center
+                                .shadow(20.dp, RoundedCornerShape(48.dp)),
+                            shape = RoundedCornerShape(48.dp),
+                            color = Color.White
                         ) {
                             Image(
                                 painter = painterResource(pages[page].imageRes),
                                 contentDescription = null,
-                                modifier = Modifier.fillMaxSize().padding(12.dp).clip(RoundedCornerShape(36.dp)),
+                                modifier = Modifier.fillMaxSize().padding(16.dp).clip(RoundedCornerShape(32.dp)),
                                 contentScale = ContentScale.Crop
                             )
                         }
@@ -109,13 +109,13 @@ class OnboardingScreen : Screen {
 
                         Text(
                             text = pages[page].title,
-                            style = MaterialTheme.typography.h1.copy(color = Color.White, textAlign = TextAlign.Center)
+                            style = MaterialTheme.typography.h1.copy(color = TextDark, textAlign = TextAlign.Center)
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
                             text = pages[page].subtitle,
                             style = MaterialTheme.typography.body1.copy(
-                                color = Color.White.copy(alpha = 0.7f),
+                                color = TextSecondary,
                                 textAlign = TextAlign.Center,
                                 lineHeight = 24.sp
                             )
@@ -138,7 +138,7 @@ class OnboardingScreen : Screen {
                             val width by animateDpAsState(if (isActive) 28.dp else 8.dp, tween(300))
                             val color by animateColorAsState(
                                 if (isActive) BrandGradientFull[index % BrandGradientFull.size]
-                                else Color.White.copy(alpha = 0.2f),
+                                else Color.Black.copy(alpha = 0.1f),
                                 tween(300)
                             )
                             Box(
@@ -152,7 +152,7 @@ class OnboardingScreen : Screen {
                         }
                     }
 
-                    // Main Action Button
+                    // Main Action Button - Now using Brand Gradient for consistency
                     Button(
                         onClick = {
                             if (pagerState.currentPage < 2) {
@@ -163,25 +163,26 @@ class OnboardingScreen : Screen {
                         },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(64.dp)
-                            .shadow(12.dp, RoundedCornerShape(32.dp)),
-                        shape = RoundedCornerShape(32.dp),
-                        colors = ButtonDefaults.buttonColors(backgroundColor = Color.White)
+                            .height(60.dp)
+                            .shadow(12.dp, CircleShape),
+                        shape = CircleShape,
+                        colors = ButtonDefaults.buttonColors(backgroundColor = Color.Transparent),
+                        contentPadding = PaddingValues(0.dp)
                     ) {
-                        Text(
-                            text = if (pagerState.currentPage == 2) "Get Started" else "Continue",
-                            style = MaterialTheme.typography.button.copy(color = TextDark, fontSize = 18.sp)
-                        )
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(brush = Brush.linearGradient(BrandGradient)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = if (pagerState.currentPage == 2) "Get Started" else "Continue",
+                                style = MaterialTheme.typography.button.copy(color = Color.White)
+                            )
+                        }
                     }
                     
-                    if (pagerState.currentPage == 0) {
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text("Discovery starts here.", color = Color.White.copy(alpha = 0.4f), style = MaterialTheme.typography.caption)
-                        }
-                    } else {
-                        Spacer(modifier = Modifier.height(16.dp))
-                    }
+                    Spacer(modifier = Modifier.height(24.dp))
                 }
             }
         }

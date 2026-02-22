@@ -41,21 +41,21 @@ class MainDashboardScreen : Screen {
                     shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp)
                 ) {
                     Row(
-                        modifier = Modifier.fillMaxWidth().height(80.dp).padding(horizontal = 12.dp),
+                        modifier = Modifier.fillMaxWidth().height(84.dp).padding(horizontal = 12.dp),
                         horizontalArrangement = Arrangement.SpaceAround,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         NavItem(icon = { IconHome(if (selectedTab == 0) BrandBlue else TextSecondary, 24f) }, label = "Home", selected = selectedTab == 0) { selectedTab = 0 }
                         NavItem(icon = { IconAlbum(if (selectedTab == 1) BrandPurple else TextSecondary, 24f) }, label = "Feed", selected = selectedTab == 1) { selectedTab = 1 }
 
-                        // Central Highlighted FAB
+                        // Central Highlighted FAB - Consistent with mockup (Red/Coral)
                         Box(
                             modifier = Modifier
                                 .size(60.dp)
                                 .offset(y = (-15).dp)
                                 .shadow(12.dp, CircleShape)
                                 .clip(CircleShape)
-                                .background(brush = Brush.linearGradient(BrandGradientFull))
+                                .background(brush = Brush.linearGradient(listOf(BrandCoral, BrandPink)))
                                 .clickable { navigator.push(PhotoCaptureScreen()) },
                             contentAlignment = Alignment.Center
                         ) {
@@ -68,7 +68,7 @@ class MainDashboardScreen : Screen {
                 }
             }
         ) { padding ->
-            Box(modifier = Modifier.fillMaxSize().padding(padding).background(BackgroundLight)) {
+            Box(modifier = Modifier.fillMaxSize().padding(padding).background(Color.White)) {
                 when (selectedTab) {
                     0 -> HomeTab(onGroupClick = { gid -> activeGroupId = gid; selectedTab = 1 })
                     1 -> AlbumFeedScreen().ContentWithId(activeGroupId)
@@ -93,7 +93,8 @@ fun NavItem(icon: @Composable () -> Unit, label: String, selected: Boolean, onCl
             text = label,
             style = MaterialTheme.typography.caption.copy(
                 color = if (selected) TextDark else TextSecondary,
-                fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium
+                fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                fontSize = 11.sp
             )
         )
     }
@@ -104,6 +105,7 @@ fun NavItem(icon: @Composable () -> Unit, label: String, selected: Boolean, onCl
 fun HomeTab(onGroupClick: (String) -> Unit) {
     var groups by remember { mutableStateOf<List<Group>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
+    var searchText by remember { mutableStateOf("") }
 
     LaunchedEffect(Unit) {
         try {
@@ -124,46 +126,66 @@ fun HomeTab(onGroupClick: (String) -> Unit) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column {
-                    Text("Hello, ${SessionManager.session.username ?: "User"}", style = MaterialTheme.typography.h3)
-                    Text("Ready for new memories?", style = MaterialTheme.typography.body2)
+                    Text("Your Albums", style = MaterialTheme.typography.h1.copy(fontSize = 28.sp))
+                    Text("All moments. One place.", style = MaterialTheme.typography.body2)
                 }
                 Surface(
                     shape = CircleShape,
-                    color = Color.White,
-                    border = null,
+                    color = BackgroundLight,
                     modifier = Modifier.size(44.dp).clickable { },
-                    elevation = 2.dp
                 ) {
-                    Box(contentAlignment = Alignment.Center) { IconBell(BrandCoral, 22f) }
+                    Box(contentAlignment = Alignment.Center) { IconBell(TextDark, 20f) }
                 }
             }
+            Spacer(modifier = Modifier.height(24.dp))
+        }
+
+        // Search Bar matching mockup
+        item {
+            OutlinedTextField(
+                value = searchText,
+                onValueChange = { searchText = it },
+                modifier = Modifier.fillMaxWidth(),
+                placeholder = { Text("Search albums or friends...") },
+                shape = CircleShape,
+                leadingIcon = { IconSearch(TextSecondary, 18f) },
+                colors = TextFieldDefaults.outlinedTextFieldColors(
+                    backgroundColor = BackgroundLight,
+                    unfocusedBorderColor = Color.Transparent,
+                    focusedBorderColor = BrandBlue.copy(alpha = 0.3f)
+                ),
+                singleLine = true
+            )
             Spacer(modifier = Modifier.height(32.dp))
         }
 
         item {
-            Text("PINNED ALBUMS", style = MaterialTheme.typography.caption.copy(letterSpacing = 2.sp, fontWeight = FontWeight.Bold))
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Text("RECENT FAVORITES", style = MaterialTheme.typography.caption.copy(letterSpacing = 1.sp, fontWeight = FontWeight.Bold))
+                Text("View All", style = MaterialTheme.typography.caption.copy(color = BrandCoral))
+            }
             Spacer(modifier = Modifier.height(16.dp))
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                FavoriteCard(Modifier.weight(1f), "Trip to Bali", "24 photos", listOf(Color(0xFFE0F2FE), Color(0xFFBAE6FD))) { IconCamera(BrandBlue, 28f) }
-                FavoriteCard(Modifier.weight(1f), "Work Lunch", "8 photos", listOf(Color(0xFFEDE9FE), Color(0xFFDDD6FE))) { IconAlbum(BrandPurple, 28f) }
+                FavoriteCard(Modifier.weight(1f), "Summer Festival", "12 photos", listOf(Color(0xFFFFF7ED), Color(0xFFFFEDD5))) { IconCamera(BrandOrange, 28f) }
+                FavoriteCard(Modifier.weight(1f), "Japan Trip", "45 photos", listOf(Color(0xFFF0F9FF), Color(0xFFE0F2FE))) { IconAlbum(BrandBlue, 28f) }
             }
             Spacer(modifier = Modifier.height(32.dp))
         }
 
         item {
-            Text("ALL COLLECTIONS", style = MaterialTheme.typography.caption.copy(letterSpacing = 2.sp, fontWeight = FontWeight.Bold))
+            Text("ALL COLLECTIONS", style = MaterialTheme.typography.caption.copy(letterSpacing = 1.sp, fontWeight = FontWeight.Bold))
             Spacer(modifier = Modifier.height(16.dp))
         }
 
         if (isLoading) {
-            item { Box(Modifier.fillMaxWidth().padding(40.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = BrandBlue) } }
+            item { Box(Modifier.fillMaxWidth().padding(40.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = BrandBlue, strokeWidth = 3.dp) } }
         } else if (groups.isEmpty()) {
             item {
                 Column(
                     modifier = Modifier.fillMaxWidth().padding(vertical = 40.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Image(painter = painterResource("drawable/empty_album.png"), contentDescription = null, modifier = Modifier.size(140.dp), contentScale = ContentScale.Fit)
+                    Image(painter = painterResource("drawable/empty_album.png"), contentDescription = null, modifier = Modifier.size(120.dp), contentScale = ContentScale.Fit)
                     Spacer(Modifier.height(16.dp))
                     Text("No albums yet", style = MaterialTheme.typography.h3)
                     Text("Start by creating your first group.", style = MaterialTheme.typography.body2, textAlign = TextAlign.Center)
@@ -174,6 +196,8 @@ fun HomeTab(onGroupClick: (String) -> Unit) {
                 CollectionCard(group.name, group.joinCode) { onGroupClick(group.id) }
             }
         }
+        
+        item { Spacer(modifier = Modifier.height(100.dp)) }
     }
 }
 
@@ -186,7 +210,7 @@ fun FavoriteCard(modifier: Modifier, title: String, count: String, gradient: Lis
     ) {
         Box(modifier = Modifier.background(Brush.verticalGradient(gradient)).padding(20.dp)) {
             Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.SpaceBetween) {
-                Surface(shape = CircleShape, color = Color.White.copy(alpha = 0.5f), modifier = Modifier.size(40.dp)) {
+                Surface(shape = CircleShape, color = Color.White.copy(alpha = 0.6f), modifier = Modifier.size(40.dp)) {
                     Box(contentAlignment = Alignment.Center) { icon() }
                 }
                 Column {
@@ -200,24 +224,30 @@ fun FavoriteCard(modifier: Modifier, title: String, count: String, gradient: Lis
 
 @Composable
 fun CollectionCard(title: String, code: String, onClick: () -> Unit) {
-    Card(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp).clickable(onClick = onClick),
+    Surface(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp).clickable(onClick = onClick),
         shape = MaterialTheme.shapes.medium,
-        elevation = 2.dp
+        color = BackgroundLight
     ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Surface(shape = RoundedCornerShape(12.dp), color = CardBackground, modifier = Modifier.size(50.dp)) {
+            Surface(shape = RoundedCornerShape(12.dp), color = Color.White, modifier = Modifier.size(50.dp)) {
                 Box(contentAlignment = Alignment.Center) { IconAlbum(BrandBlue, 20f) }
             }
             Spacer(modifier = Modifier.width(16.dp))
             Column(Modifier.weight(1f)) {
                 Text(title, style = MaterialTheme.typography.h3.copy(fontSize = 16.sp))
-                Text("Code: $code", style = MaterialTheme.typography.body2)
+                Text("Join Code: $code", style = MaterialTheme.typography.body2)
             }
-            IconBack(TextSecondary, 16f) // Reusing back icon as a chevron
+            // Add Button matching mockup (Red circle with plus)
+            Box(
+                modifier = Modifier.size(32.dp).clip(CircleShape).background(BrandCoral),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("+", color = Color.White, fontWeight = FontWeight.Bold)
+            }
         }
     }
 }
