@@ -10,6 +10,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -21,152 +22,172 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
+import cafe.adriel.voyager.core.screen.uniqueScreenKey
+import io.kamel.image.KamelImage
+import io.kamel.image.asyncPainterResource
+import kotlinx.coroutines.launch
+import rememberImagePicker
+import rememberCameraPicker
 
-class PhotoCaptureScreen : Screen {
+class PhotoCaptureScreen(val groupId: String? = null) : Screen {
+    override val key = uniqueScreenKey
+
     @OptIn(ExperimentalResourceApi::class)
     @Composable
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
+        val scope = rememberCoroutineScope()
         var selectedMode by remember { mutableStateOf("PHOTO") }
+        var isUploading by remember { mutableStateOf(false) }
 
-        Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
-            // "Lens" Preview Mock
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        brush = Brush.verticalGradient(
-                            listOf(Color(0xFF0F172A).copy(0.8f), Color(0xFF000000))
-                        )
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                IconCamera(Color.White.copy(0.1f), 140f)
+        val handleImagePicked: (ByteArray?) -> Unit = { bytes ->
+            appLog("ImagePicked Callback Triggered - Bytes received: ${bytes?.size} bytes")
+            if (bytes != null && groupId != null) {
+                appLog("ImagePicked: Valid bytes and groupId ($groupId), starting upload...")
+                isUploading = true
+                scope.launch {
+                    try {
+                        appLog("Calling FriendLensApi.uploadPhoto")
+                        val response = FriendLensApi.uploadPhoto(groupId, bytes)
+                        appLog("Upload success! Response status: ${response.status}")
+                        
+                        // Trigger a cache refresh internally
+                        appLog("Refreshing group photos cache...")
+                        val photoResp = FriendLensApi.getGroupPhotos(groupId)
+                        DataCache.updateGroupPhotos(groupId, photoResp.photos)
+                        appLog("Cache refresh complete. Found ${photoResp.photos.size} photos.")
+                        
+                        sendLocalNotification("Moment Captured!", "Uploaded to your shared album...")
+                        navigator.pop()
+                    } catch (e: Exception) {
+                        appLog("ERROR during upload: ${e.message}")
+                        e.printStackTrace()
+                    } finally {
+                        isUploading = false
+                    }
+                }
+            } else if (bytes != null) {
+                appLog("Bytes received but NO groupId! Simulating local save.")
+                // If there's no group ID, just simulate or prompt user to select a group (mock for now)
+                sendLocalNotification("Moment Captured!", "Select an album to share to!")
+                navigator.pop()
+            } else {
+                appLog("bytes was NULL. Likely user cancelled picking.")
             }
+        }
 
-            // Controls Overlay
-            Column(modifier = Modifier.fillMaxSize()) {
-                // Toolbar
+        val launchCamera = rememberCameraPicker(handleImagePicked)
+        val launchGallery = rememberImagePicker(handleImagePicked)
+
+        Box(modifier = Modifier.fillMaxSize().background(BackgroundLight)) {
+            Column(
+                modifier = Modifier.fillMaxSize().padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // Header
                 Row(
-                    modifier = Modifier.fillMaxWidth().padding(top = 60.dp, start = 24.dp, end = 24.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.fillMaxWidth().padding(top = 20.dp, bottom = 40.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Surface(
                         shape = CircleShape,
-                        color = Color.White.copy(0.1f),
+                        color = Color.White,
+                        elevation = 4.dp,
                         modifier = Modifier.size(44.dp).clickable { navigator.pop() }
                     ) {
-                        Box(contentAlignment = Alignment.Center) { IconClose(Color.White, 20f) }
+                        Box(contentAlignment = Alignment.Center) { IconBack(TextPrimary, 20f) }
                     }
-                    
-                    Surface(
-                        shape = RoundedCornerShape(20.dp),
-                        color = Color.White.copy(0.1f),
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-                    ) {
-                        Text("MOMENT ALBUM", style = MaterialTheme.typography.caption.copy(color = Color.White, letterSpacing = 2.sp))
-                    }
-
-                    Surface(
-                        shape = CircleShape,
-                        color = Color.White.copy(0.1f),
-                        modifier = Modifier.size(44.dp)
-                    ) {
-                        Box(contentAlignment = Alignment.Center) { IconFlash(WarningAmber, 20f) }
-                    }
+                    Spacer(Modifier.width(16.dp))
+                    Text(
+                        text = "Add Memory",
+                        style = MaterialTheme.typography.h2.copy(fontSize = 22.sp),
+                        maxLines = 1
+                    )
                 }
 
                 Spacer(modifier = Modifier.weight(1f))
 
-                // Camera UI Bottom Bar
-                Column(
+                // Camera Option
+                Surface(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp))
-                        .background(Color.Black.copy(0.5f))
-                        .padding(bottom = 60.dp, top = 24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                        .height(140.dp)
+                        .shadow(16.dp, RoundedCornerShape(24.dp))
+                        .clickable { launchCamera() },
+                    shape = RoundedCornerShape(24.dp),
+                    color = BrandPrimary
                 ) {
-                    // Zoom Switcher
                     Row(
                         modifier = Modifier
-                            .clip(CircleShape)
-                            .background(Color.White.copy(0.1f))
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
-                        horizontalArrangement = Arrangement.spacedBy(24.dp)
+                            .fillMaxSize()
+                            .background(Brush.linearGradient(listOf(BrandPrimary, Color(0xFFFB7185))))
+                            .padding(24.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
                     ) {
-                        Text("0.5", color = Color.White.copy(0.5f), fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                        Text("1x", color = ActiveZoom, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                        Text("3x", color = Color.White.copy(0.5f), fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                    }
-
-                    Spacer(modifier = Modifier.height(40.dp))
-
-                    // Shutter Row
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 48.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        // Gallery Preview
-                        Box(
-                            modifier = Modifier
-                                .size(50.dp)
-                                .clip(RoundedCornerShape(12.dp))
-                                .border(2.dp, Color.White.copy(0.3f), RoundedCornerShape(12.dp))
-                        ) {
-                            Image(
-                                painter = painterResource("drawable/photo_sample.png"),
-                                contentDescription = null,
-                                modifier = Modifier.fillMaxSize(),
-                                contentScale = ContentScale.Crop
-                            )
+                        IconCamera(Color.White, 48f)
+                        Spacer(Modifier.width(20.dp))
+                        Column {
+                            Text("Capture Photo", style = MaterialTheme.typography.h3.copy(color = Color.White, fontSize = 20.sp))
+                            Text("Use your device camera", style = MaterialTheme.typography.body2.copy(color = Color.White.copy(0.8f)))
                         }
+                    }
+                }
 
-                        // Main Shutter Button
-                        Box(
-                            modifier = Modifier
-                                .size(84.dp)
-                                .clip(CircleShape)
-                                .border(4.dp, Brush.linearGradient(BrandGradientFull), CircleShape)
-                                .padding(8.dp)
-                                .clip(CircleShape)
-                                .background(Color.White)
-                                .clickable { 
-                                    sendLocalNotification("Moment Captured!", "Uploading to your shared album...")
-                                }
-                        )
+                Spacer(modifier = Modifier.height(24.dp))
 
-                        // Flip Cam
+                // Gallery Option
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(140.dp)
+                        .shadow(16.dp, RoundedCornerShape(24.dp))
+                        .clickable { launchGallery() },
+                    shape = RoundedCornerShape(24.dp),
+                    color = Color.White
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(24.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
                         Surface(
                             shape = CircleShape,
-                            color = Color.White.copy(0.1f),
-                            modifier = Modifier.size(50.dp)
+                            color = BrandPrimary.copy(0.1f),
+                            modifier = Modifier.size(64.dp)
                         ) {
-                            Box(contentAlignment = Alignment.Center) { IconFlip(Color.White, 24f) }
+                            Box(contentAlignment = Alignment.Center) {
+                                IconAlbum(BrandPrimary, 32f)
+                            }
+                        }
+                        Spacer(Modifier.width(20.dp))
+                        Column {
+                            Text("Pick from Gallery", style = MaterialTheme.typography.h3.copy(color = TextPrimary, fontSize = 20.sp))
+                            Text("Choose an existing photo", style = MaterialTheme.typography.body2.copy(color = TextSecondary))
                         }
                     }
+                }
 
-                    Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.weight(1.5f))
+            }
 
-                    // Mode Selector
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(32.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        listOf("PORTRAIT", "PHOTO", "SQUARE").forEach { mode ->
-                            val isActive = selectedMode == mode
-                            Text(
-                                text = mode,
-                                modifier = Modifier.clickable { selectedMode = mode },
-                                style = MaterialTheme.typography.caption.copy(
-                                    color = if (isActive) BrandPrimary else Color.White.copy(0.5f),
-                                    fontWeight = if (isActive) FontWeight.Bold else FontWeight.Medium,
-                                    letterSpacing = 1.sp
-                                )
-                            )
-                        }
+            // Upload Overlay Map
+            if (isUploading) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(0.6f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        CircularProgressIndicator(color = BrandPrimary, strokeWidth = 3.dp)
+                        Spacer(Modifier.height(16.dp))
+                        Text(
+                            "Developing...",
+                            style = MaterialTheme.typography.caption.copy(color = Color.White, fontSize = 14.sp)
+                        )
                     }
                 }
             }

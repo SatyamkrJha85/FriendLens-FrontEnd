@@ -26,8 +26,13 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
+import androidx.compose.foundation.border
+import cafe.adriel.voyager.core.screen.uniqueScreenKey
+import io.kamel.image.KamelImage
+import io.kamel.image.asyncPainterResource
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
+import androidx.compose.ui.graphics.RectangleShape
 
 import cafe.adriel.voyager.core.screen.uniqueScreenKey
 
@@ -174,36 +179,45 @@ fun FeedTab() {
 @OptIn(ExperimentalResourceApi::class)
 @Composable
 fun FeedCard(photo: Photo) {
+    var isLiked by remember(photo.id) { mutableStateOf(false) }
+    var likeCount by remember(photo.id) { mutableStateOf((8..30).random()) }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 20.dp, vertical = 12.dp)
-            .shadow(12.dp, RoundedCornerShape(28.dp)),
-        shape = RoundedCornerShape(28.dp),
+            .padding(horizontal = 8.dp, vertical = 12.dp)
+            .shadow(12.dp, RoundedCornerShape(5.dp)),
+        shape = RoundedCornerShape(5.dp),
         elevation = 0.dp,
         backgroundColor = Color.White
     ) {
         Column {
+            val isMe = photo.uploadedBy == SessionManager.session.userId
+            val fallbackName = SessionManager.session.username ?: SessionManager.session.email?.substringBefore("@") ?: "You"
+            val resolvedName = if (photo.uploadedByUsername.isNullOrBlank() || photo.uploadedByUsername == "Unknown User") {
+                if (isMe) fallbackName else "User"
+            } else photo.uploadedByUsername!!
+            
             Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                 Box(
                     modifier = Modifier
                         .size(40.dp)
                         .clip(CircleShape)
                         .background(Brush.linearGradient(listOf(Color(0xFFFEE2E2), Color(0xFFE0E7FF))))
-                        .border(1.dp, Color.White, CircleShape),
+                        .border(1.dp, Color.White, RectangleShape),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = (photo.uploadedByUsername ?: "U").take(1).uppercase(),
+                        text = resolvedName.take(1).uppercase(),
                         fontWeight = FontWeight.Bold,
-                        color = BrandPrimary,
+                        color = BrandSecondary,
                         fontSize = 16.sp
                     )
                 }
                 Spacer(Modifier.width(12.dp))
                 Column {
                     Text(
-                        text = photo.uploadedByUsername ?: "Anonymous",
+                        text = resolvedName,
                         style = MaterialTheme.typography.body1.copy(fontWeight = FontWeight.Bold, color = TextPrimary)
                     )
                     Text(
@@ -212,23 +226,32 @@ fun FeedCard(photo: Photo) {
                     )
                 }
                 Spacer(Modifier.weight(1f))
-                IconMore(TextSecondary.copy(0.5f), 22f)
             }
             
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(300.dp)
-                    .padding(horizontal = 8.dp)
-                    .clip(RoundedCornerShape(20.dp))
+                    .height(200.dp)
+                    .clip(RoundedCornerShape(0.dp))
             ) {
                 // Use actual sample if available, or premium placeholder
-                Image(
-                    painter = painterResource("drawable/photo_sample.png"),
-                    contentDescription = null,
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
-                )
+                val urlToLoad = photo.getPublicUrl()
+                if (!urlToLoad.isNullOrEmpty()) {
+                    KamelImage(
+                        resource = asyncPainterResource(data = urlToLoad),
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop,
+                        onLoading = { Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = BrandPrimary) } }
+                    )
+                } else {
+                    Image(
+                        painter = painterResource("drawable/photo_sample.png"),
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                }
                 
                 // Overlay for premium look
                 Box(
@@ -243,18 +266,24 @@ fun FeedCard(photo: Photo) {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(20.dp)
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    IconHeart(BrandPrimary, filled = true, size = 24f)
+                Row(
+                    modifier = Modifier.clickable {
+                        if (isLiked) {
+                            isLiked = false
+                            likeCount--
+                        } else {
+                            isLiked = true
+                            likeCount++
+                        }
+                    },
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconHeart(if (isLiked) BrandPrimary else TextSecondary.copy(0.4f), filled = isLiked, size = 24f)
                     Spacer(Modifier.width(6.dp))
-                    Text("24", style = MaterialTheme.typography.caption.copy(fontWeight = FontWeight.Bold))
-                }
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    IconComment(TextSecondary, 24f)
-                    Spacer(Modifier.width(6.dp))
-                    Text("12", style = MaterialTheme.typography.caption.copy(color = TextSecondary))
+                    Text("$likeCount", style = MaterialTheme.typography.caption.copy(fontWeight = FontWeight.Bold, color = if (isLiked) BrandPrimary else TextSecondary))
                 }
                 Spacer(Modifier.weight(1f))
-                IconShare(TextSecondary, 22f)
+                IconDownload(TextSecondary, 24f)
             }
         }
     }
@@ -321,7 +350,7 @@ fun AlbumsTab(onGroupClick: (String) -> Unit) {
                     title = group.name,
                     time = group.createdAt?.take(10) ?: "Today",
                     subtext = "Code: ${group.joinCode}",
-                    imgUrl = group.groupImg
+                    imgUrl = group.getPublicUrl()
                 ) { onGroupClick(group.id) }
             }
         }
@@ -348,8 +377,16 @@ fun CollectionCard(title: String, time: String, subtext: String, imgUrl: String?
                     .background(Color(0xFFFEF2F2)),
                 contentAlignment = Alignment.Center
             ) {
-                // If we had a real KMP image loader, we'd use imgUrl here
-                IconAlbum(BrandPrimary, 28f)
+                if (!imgUrl.isNullOrEmpty()) {
+                    KamelImage(
+                        resource = asyncPainterResource(data = imgUrl),
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    IconAlbum(BrandPrimary, 28f)
+                }
             }
             Spacer(modifier = Modifier.width(16.dp))
             Column(Modifier.weight(1f)) {

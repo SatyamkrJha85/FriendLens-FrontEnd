@@ -141,6 +141,23 @@ fun IconSearch(color: Color, size: Float = 24f, modifier: Modifier = Modifier) {
 }
 
 @Composable
+fun IconDownload(color: Color, size: Float = 24f, modifier: Modifier = Modifier) {
+    Canvas(modifier = modifier.size(size.dp)) {
+        val s = this.size
+        val stroke = Stroke(width = s.width * 0.08f, cap = StrokeCap.Round, join = StrokeJoin.Round)
+        val path = Path().apply {
+            moveTo(s.width * 0.5f, s.height * 0.15f)
+            lineTo(s.width * 0.5f, s.height * 0.7f)
+            moveTo(s.width * 0.25f, s.height * 0.45f)
+            lineTo(s.width * 0.5f, s.height * 0.7f)
+            lineTo(s.width * 0.75f, s.height * 0.45f)
+        }
+        drawPath(path, color, style = stroke)
+        drawLine(color, Offset(s.width * 0.2f, s.height * 0.85f), Offset(s.width * 0.8f, s.height * 0.85f), strokeWidth = s.width * 0.08f, cap = StrokeCap.Round)
+    }
+}
+
+@Composable
 fun IconBell(color: Color, size: Float = 24f, modifier: Modifier = Modifier) {
     Canvas(modifier = modifier.size(size.dp)) {
         val s = this.size

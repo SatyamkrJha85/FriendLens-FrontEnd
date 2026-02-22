@@ -25,6 +25,8 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
+import io.kamel.image.KamelImage
+import io.kamel.image.asyncPainterResource
 
 class AlbumFeedScreen(val groupId: String) : Screen {
     @OptIn(ExperimentalResourceApi::class, ExperimentalMaterialApi::class)
@@ -91,16 +93,24 @@ class AlbumFeedScreen(val groupId: String) : Screen {
                         Surface(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(20.dp)
+                                .height(200.dp)
+                                .padding(horizontal = 20.dp)
                                 .shadow(20.dp, RoundedCornerShape(32.dp)),
                             shape = RoundedCornerShape(32.dp),
                             color = BrandPrimary
                         ) {
+                            val imgUrl = group.getPublicUrl()
+                            if (!imgUrl.isNullOrEmpty()) {
+                                KamelImage(resource = asyncPainterResource(data = imgUrl), contentDescription = null, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+                                Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(0.4f)))
+                            } else {
+                                Box(modifier = Modifier.fillMaxSize().background(Brush.linearGradient(listOf(BrandPrimary, Color(0xFFFB7185)))))
+                            }
+                                
                             Column(
-                                modifier = Modifier
-                                    .background(Brush.linearGradient(listOf(BrandPrimary, Color(0xFFFB7185))))
-                                    .padding(28.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally
+                                modifier = Modifier.fillMaxSize().padding(28.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     IconGroup(color = Color.White.copy(0.6f), 16f)
@@ -110,15 +120,8 @@ class AlbumFeedScreen(val groupId: String) : Screen {
                                 Spacer(Modifier.height(8.dp))
                                 Text(group.joinCode, style = MaterialTheme.typography.h1.copy(color = Color.White, fontSize = 42.sp, letterSpacing = 6.sp, fontWeight = FontWeight.Black))
                                 Spacer(Modifier.height(12.dp))
-                                Surface(
-                                    shape = CircleShape,
-                                    color = Color.White.copy(0.2f)
-                                ) {
-                                    Text(
-                                        "Hold to share code",
-                                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
-                                        style = MaterialTheme.typography.caption.copy(color = Color.White)
-                                    )
+                                Surface(shape = CircleShape, color = Color.White.copy(0.2f)) {
+                                    Text("Hold to share code", modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp), style = MaterialTheme.typography.caption.copy(color = Color.White))
                                 }
                             }
                         }
@@ -170,7 +173,7 @@ class AlbumFeedScreen(val groupId: String) : Screen {
             }
 
             FloatingActionButton(
-                onClick = { navigator.push(PhotoCaptureScreen()) },
+                onClick = { navigator.push(PhotoCaptureScreen(groupId)) },
                 backgroundColor = BrandPrimary,
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
@@ -226,20 +229,30 @@ class AlbumFeedScreen(val groupId: String) : Screen {
     @OptIn(ExperimentalResourceApi::class)
     @Composable
     fun PhotoFeedCard(photo: Photo) {
+        val scope = rememberCoroutineScope()
+        var isLiked by remember(photo.id) { mutableStateOf(false) }
+        var likeCount by remember(photo.id) { mutableStateOf((5..20).random()) } // Stubbed like count
+
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 10.dp)
-                .shadow(12.dp, RoundedCornerShape(28.dp))
-                .background(Color.White, RoundedCornerShape(28.dp))
+                .padding(horizontal = 8.dp, vertical = 10.dp)
+                .shadow(12.dp, RoundedCornerShape(20.dp))
+                .background(Color.White, RoundedCornerShape(20.dp))
         ) {
+            val isMe = photo.uploadedBy == SessionManager.session.userId
+            val fallbackName = SessionManager.session.username ?: SessionManager.session.email?.substringBefore("@") ?: "You"
+            val resolvedName = if (photo.uploadedByUsername.isNullOrBlank() || photo.uploadedByUsername == "Unknown User") {
+                if (isMe) fallbackName else "User"
+            } else photo.uploadedByUsername!!
+            
             Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                 Box(Modifier.size(38.dp).clip(CircleShape).background(Color(0xFFEFF6FF)), contentAlignment = Alignment.Center) {
-                    Text((photo.uploadedByUsername ?: "U").take(1).uppercase(), style = MaterialTheme.typography.caption.copy(color = BrandPrimary, fontWeight = FontWeight.Bold, fontSize = 16.sp))
+                    Text(resolvedName.take(1).uppercase(), style = MaterialTheme.typography.caption.copy(color = BrandPrimary, fontWeight = FontWeight.Bold, fontSize = 16.sp))
                 }
                 Spacer(modifier = Modifier.width(14.dp))
                 Column {
-                    Text(photo.uploadedByUsername ?: "Unknown", style = MaterialTheme.typography.body1.copy(fontWeight = FontWeight.Bold, fontSize = 15.sp))
+                    Text(resolvedName, style = MaterialTheme.typography.body1.copy(fontWeight = FontWeight.Bold, fontSize = 15.sp))
                     Text(photo.uploadedAt?.split("T")?.get(0) ?: "Recently", style = MaterialTheme.typography.caption.copy(fontSize = 11.sp, color = TextSecondary))
                 }
                 Spacer(Modifier.weight(1f))
@@ -250,15 +263,25 @@ class AlbumFeedScreen(val groupId: String) : Screen {
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(340.dp)
-                    .padding(horizontal = 12.dp)
-                    .clip(RoundedCornerShape(20.dp))
+                    .clip(RoundedCornerShape(0.dp))
             ) {
-                Image(
-                    painter = painterResource("drawable/photo_sample.png"),
-                    contentDescription = null,
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
-                )
+                val urlToLoad = photo.getPublicUrl()
+                if (!urlToLoad.isNullOrEmpty()) {
+                    KamelImage(
+                        resource = asyncPainterResource(data = urlToLoad),
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop,
+                        onLoading = { Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = BrandPrimary) } }
+                    )
+                } else {
+                    Image(
+                        painter = painterResource("drawable/photo_sample.png"),
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                }
             }
 
             Row(
@@ -266,18 +289,26 @@ class AlbumFeedScreen(val groupId: String) : Screen {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(24.dp)
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    IconHeart(BrandPrimary, filled = true, size = 26f)
+                Row(
+                    modifier = Modifier.clickable {
+                        if (isLiked) {
+                            isLiked = false
+                            likeCount--
+                            scope.launch { try { FriendLensApi.unlikePhoto(groupId, photo.id) } catch (_: Exception) {} }
+                        } else {
+                            isLiked = true
+                            likeCount++
+                            scope.launch { try { FriendLensApi.likePhoto(groupId, photo.id) } catch (_: Exception) {} }
+                        }
+                    },
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconHeart(if (isLiked) BrandPrimary else TextSecondary.copy(0.4f), filled = isLiked, size = 26f)
                     Spacer(Modifier.width(8.dp))
-                    Text("Like", style = MaterialTheme.typography.caption.copy(fontWeight = FontWeight.Bold))
-                }
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    IconComment(TextSecondary, 26f)
-                    Spacer(Modifier.width(8.dp))
-                    Text("Chat", style = MaterialTheme.typography.caption.copy(color = TextSecondary))
+                    Text("$likeCount", style = MaterialTheme.typography.caption.copy(fontWeight = FontWeight.Bold, color = if (isLiked) BrandPrimary else TextSecondary))
                 }
                 Spacer(Modifier.weight(1f))
-                IconShare(TextSecondary.copy(0.7f), 22f)
+                IconDownload(TextSecondary.copy(0.7f), 24f)
             }
         }
     }

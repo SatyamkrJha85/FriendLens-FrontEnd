@@ -72,8 +72,19 @@ data class Group(
     val description: String? = null,
     val joinCode: String,
     val createdAt: String? = null,
-    val groupImg: String? = null
-)
+    val groupImg: String? = null,
+    // robust fields in case the backend serialization differs
+    val s3Key: String? = null,
+    val image: String? = null,
+    val coverImage: String? = null,
+    val imageUrl: String? = null
+) {
+    fun getPublicUrl(): String? {
+        val path = groupImg ?: s3Key ?: imageUrl ?: image ?: coverImage ?: return null
+        if (path.startsWith("http")) return path
+        return "https://uhuyybebchznxxbsaxvd.supabase.co/storage/v1/object/public/imgbucket/$path"
+    }
+}
 
 @Serializable
 data class CreateGroupRequest(
@@ -135,7 +146,12 @@ data class Photo(
     val capturedAt: String? = null,
     val fileSizeBytes: String? = null,
     val s3Key: String? = null
-)
+) {
+    fun getPublicUrl(): String? {
+        val path = s3KeyOriginal ?: s3Key ?: return null
+        return "https://uhuyybebchznxxbsaxvd.supabase.co/storage/v1/object/public/imgbucket/$path"
+    }
+}
 
 @Serializable
 data class UploadPhotoResponse(

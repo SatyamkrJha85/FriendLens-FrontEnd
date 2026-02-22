@@ -142,8 +142,10 @@ class LoginScreen : Screen {
                         errorMsg = null
                         scope.launch {
                             try {
+                                appLog("LoginScreen: Submitting login for $email")
                                 val authResp = FriendLensApi.login(LoginRequest(email, password))
                                 if (authResp.access_token != null) {
+                                    appLog("LoginScreen: Login token success, fetching profile for $email")
                                     FriendLensApi.authToken = authResp.access_token
                                     val userResp = FriendLensApi.getCurrentUser()
                                     SessionManager.login(
@@ -153,11 +155,14 @@ class LoginScreen : Screen {
                                         username = userResp.username,
                                         avatarUrl = userResp.avatarUrl
                                     )
+                                    appLog("LoginScreen: Navigating to MainDashboardScreen")
                                     navigator.replaceAll(MainDashboardScreen())
                                 } else {
+                                    appLog("LoginScreen: server rejected - ${authResp.error_description}")
                                     errorMsg = authResp.error_description ?: "Invalid login"
                                 }
                             } catch (e: Exception) {
+                                appLog("LoginScreen: Network Exception - ${e.message}")
                                 errorMsg = "Network error occurred"
                             } finally {
                                 isLoading = false
@@ -266,8 +271,10 @@ class SignupScreen : Screen {
                         errorMsg = null
                         scope.launch {
                             try {
+                                appLog("SignupScreen: Submitting signup for $email")
                                 val signupResp = FriendLensApi.signup(SignupRequest(email, password))
                                 if (signupResp.msg != null || signupResp.user != null) {
+                                    appLog("SignupScreen: Signup successful, attempting auto-login for $email")
                                     val authResp = FriendLensApi.login(LoginRequest(email, password))
                                     if (authResp.access_token != null) {
                                         FriendLensApi.authToken = authResp.access_token
@@ -280,14 +287,18 @@ class SignupScreen : Screen {
                                             username = username,
                                             avatarUrl = userResp.avatarUrl
                                         )
+                                        appLog("SignupScreen: Auto-login success, navigating to dashboard")
                                         navigator.replaceAll(MainDashboardScreen())
                                     } else {
+                                        appLog("SignupScreen: Auto-login failed, but signup succeeded. Wait for email.")
                                         errorMsg = authResp.error_description ?: "Signup successful. Please check your email to confirm."
                                     }
                                 } else {
+                                    appLog("SignupScreen: Server rejected signup - ${signupResp.error_description}")
                                     errorMsg = signupResp.error_description ?: "Signup failed"
                                 }
                             } catch (e: Exception) {
+                                appLog("SignupScreen: Network Exception - ${e.message}")
                                 errorMsg = "Check your connection"
                             } finally {
                                 isLoading = false

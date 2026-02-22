@@ -130,14 +130,20 @@ class CreateJoinGroupScreen : Screen {
                             error = null
                             scope.launch {
                                 try {
+                                    appLog("CreateJoinGroupScreen: Attempting to join group with code $joinCode")
                                     val resp = FriendLensApi.joinGroup(JoinGroupRequest(joinCode))
                                     if (resp.status == "success") {
+                                        appLog("CreateJoinGroupScreen: Successfully joined group! Invalidating cache and routing to dashboard.")
                                         DataCache.clear() // Invalidate cache to see new group
                                         navigator.replaceAll(MainDashboardScreen()) 
                                     } else {
+                                        appLog("CreateJoinGroupScreen: Failed to join - ${resp.message}")
                                         error = resp.message
                                     }
-                                } catch (e: Exception) { error = "Unable to join group" }
+                                } catch (e: Exception) { 
+                                    appLog("CreateJoinGroupScreen: Network Exception joining group - ${e.message}")
+                                    error = "Unable to join group" 
+                                }
                                 finally { isLoading = false }
                             }
                         },
@@ -230,14 +236,20 @@ class CreateJoinGroupScreen : Screen {
                                 try {
                                     // In a real app, we'd need to update the backend to accept groupImg in createGroup
                                     // For now we use the existing API call
+                                    appLog("CreateJoinGroupScreen: Attempting to create group '$groupName' with image size ${groupImgBytes?.size ?: 0}")
                                     val resp = FriendLensApi.createGroupWithImage(name = groupName, description = groupDesc, imageBytes = groupImgBytes)
                                     if (resp.status == "success") {
+                                        appLog("CreateJoinGroupScreen: Group creation successful! Invalidating cache and routing.")
                                         DataCache.clear() // Invalidate cache
                                         navigator.replaceAll(MainDashboardScreen())
                                     } else {
+                                        appLog("CreateJoinGroupScreen: Group creation failed from server - ${resp.message}")
                                         error = resp.message
                                     }
-                                } catch (e: Exception) { error = "Creation failed" }
+                                } catch (e: Exception) { 
+                                    appLog("CreateJoinGroupScreen: Exception during group creation - ${e.message}")
+                                    error = "Creation failed" 
+                                }
                                 finally { isLoading = false }
                             }
                         },

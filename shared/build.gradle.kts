@@ -41,6 +41,7 @@ kotlin {
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0")
                 
                 implementation("io.github.jan-tennert.supabase:gotrue-kt:2.5.0")
+                implementation("media.kamel:kamel-image:0.9.1")
             }
         }
         val androidMain by getting {
