@@ -17,8 +17,8 @@ import androidx.compose.ui.unit.dp
 // Using Canvas-drawn vector icons for reliable cross-platform rendering
 
 @Composable
-fun IconHome(color: Color, size: Float = 24f) {
-    Canvas(modifier = Modifier.size(size.dp)) {
+fun IconHome(color: Color, size: Float = 24f, modifier: Modifier = Modifier) {
+    Canvas(modifier = modifier.size(size.dp)) {
         val s = this.size
         val stroke = Stroke(width = s.width * 0.08f, cap = StrokeCap.Round, join = StrokeJoin.Round)
         val path = Path().apply {
@@ -38,8 +38,8 @@ fun IconHome(color: Color, size: Float = 24f) {
 }
 
 @Composable
-fun IconAlbum(color: Color, size: Float = 24f) {
-    Canvas(modifier = Modifier.size(size.dp)) {
+fun IconAlbum(color: Color, size: Float = 24f, modifier: Modifier = Modifier) {
+    Canvas(modifier = modifier.size(size.dp)) {
         val s = this.size
         val stroke = Stroke(width = s.width * 0.08f, cap = StrokeCap.Round, join = StrokeJoin.Round)
         // Back card
@@ -59,8 +59,8 @@ fun IconAlbum(color: Color, size: Float = 24f) {
 }
 
 @Composable
-fun IconCamera(color: Color, size: Float = 24f) {
-    Canvas(modifier = Modifier.size(size.dp)) {
+fun IconCamera(color: Color, size: Float = 24f, modifier: Modifier = Modifier) {
+    Canvas(modifier = modifier.size(size.dp)) {
         val s = this.size
         val stroke = Stroke(width = s.width * 0.08f, cap = StrokeCap.Round, join = StrokeJoin.Round)
         // Body
@@ -79,8 +79,8 @@ fun IconCamera(color: Color, size: Float = 24f) {
 }
 
 @Composable
-fun IconGroup(color: Color, size: Float = 24f) {
-    Canvas(modifier = Modifier.size(size.dp)) {
+fun IconGroup(color: Color, size: Float = 24f, modifier: Modifier = Modifier) {
+    Canvas(modifier = modifier.size(size.dp)) {
         val s = this.size
         val stroke = Stroke(width = s.width * 0.08f, cap = StrokeCap.Round, join = StrokeJoin.Round)
         // Center person head
@@ -99,8 +99,8 @@ fun IconGroup(color: Color, size: Float = 24f) {
 }
 
 @Composable
-fun IconProfile(color: Color, size: Float = 24f) {
-    Canvas(modifier = Modifier.size(size.dp)) {
+fun IconProfile(color: Color, size: Float = 24f, modifier: Modifier = Modifier) {
+    Canvas(modifier = modifier.size(size.dp)) {
         val s = this.size
         val stroke = Stroke(width = s.width * 0.08f, cap = StrokeCap.Round, join = StrokeJoin.Round)
         // Head
@@ -111,8 +111,8 @@ fun IconProfile(color: Color, size: Float = 24f) {
 }
 
 @Composable
-fun IconHeart(color: Color, filled: Boolean = false, size: Float = 24f) {
-    Canvas(modifier = Modifier.size(size.dp)) {
+fun IconHeart(color: Color, filled: Boolean = false, size: Float = 24f, modifier: Modifier = Modifier) {
+    Canvas(modifier = modifier.size(size.dp)) {
         val s = this.size
         val heart = Path().apply {
             moveTo(s.width * 0.5f, s.height * 0.85f)
@@ -131,8 +131,18 @@ fun IconHeart(color: Color, filled: Boolean = false, size: Float = 24f) {
 }
 
 @Composable
-fun IconBell(color: Color, size: Float = 24f) {
-    Canvas(modifier = Modifier.size(size.dp)) {
+fun IconSearch(color: Color, size: Float = 24f, modifier: Modifier = Modifier) {
+    Canvas(modifier = modifier.size(size.dp)) {
+        val s = this.size
+        val stroke = Stroke(width = s.width * 0.1f, cap = StrokeCap.Round, join = StrokeJoin.Round)
+        drawCircle(color, radius = s.width * 0.35f, center = Offset(s.width * 0.4f, s.height * 0.4f), style = stroke)
+        drawLine(color, Offset(s.width * 0.65f, s.height * 0.65f), Offset(s.width * 0.9f, s.height * 0.9f), strokeWidth = s.width * 0.1f, cap = StrokeCap.Round)
+    }
+}
+
+@Composable
+fun IconBell(color: Color, size: Float = 24f, modifier: Modifier = Modifier) {
+    Canvas(modifier = modifier.size(size.dp)) {
         val s = this.size
         val stroke = Stroke(width = s.width * 0.08f, cap = StrokeCap.Round, join = StrokeJoin.Round)
         val bell = Path().apply {
@@ -149,13 +159,13 @@ fun IconBell(color: Color, size: Float = 24f) {
         // Clapper
         drawLine(color, Offset(s.width * 0.38f, s.height * 0.82f), Offset(s.width * 0.62f, s.height * 0.82f), strokeWidth = s.width * 0.08f, cap = StrokeCap.Round)
         // Dot notification
-        drawCircle(BrandCoral, radius = s.width * 0.07f, center = Offset(s.width * 0.72f, s.height * 0.22f))
+        drawCircle(BrandPrimary, radius = s.width * 0.07f, center = Offset(s.width * 0.72f, s.height * 0.22f))
     }
 }
 
 @Composable
-fun IconShare(color: Color, size: Float = 24f) {
-    Canvas(modifier = Modifier.size(size.dp)) {
+fun IconShare(color: Color, size: Float = 24f, modifier: Modifier = Modifier) {
+    Canvas(modifier = modifier.size(size.dp)) {
         val s = this.size
         val stroke = Stroke(width = s.width * 0.08f, cap = StrokeCap.Round, join = StrokeJoin.Round)
         val path = Path().apply {
@@ -171,8 +181,8 @@ fun IconShare(color: Color, size: Float = 24f) {
 }
 
 @Composable
-fun IconPlus(color: Color, size: Float = 24f) {
-    Canvas(modifier = Modifier.size(size.dp)) {
+fun IconPlus(color: Color, size: Float = 24f, modifier: Modifier = Modifier) {
+    Canvas(modifier = modifier.size(size.dp)) {
         val s = this.size
         drawLine(color, Offset(s.width * 0.5f, s.height * 0.2f), Offset(s.width * 0.5f, s.height * 0.8f), strokeWidth = s.width * 0.1f, cap = StrokeCap.Round)
         drawLine(color, Offset(s.width * 0.2f, s.height * 0.5f), Offset(s.width * 0.8f, s.height * 0.5f), strokeWidth = s.width * 0.1f, cap = StrokeCap.Round)
@@ -180,8 +190,8 @@ fun IconPlus(color: Color, size: Float = 24f) {
 }
 
 @Composable
-fun IconBack(color: Color, size: Float = 24f) {
-    Canvas(modifier = Modifier.size(size.dp)) {
+fun IconBack(color: Color, size: Float = 24f, modifier: Modifier = Modifier) {
+    Canvas(modifier = modifier.size(size.dp)) {
         val s = this.size
         val stroke = Stroke(width = s.width * 0.1f, cap = StrokeCap.Round, join = StrokeJoin.Round)
         val path = Path().apply {
@@ -194,8 +204,8 @@ fun IconBack(color: Color, size: Float = 24f) {
 }
 
 @Composable
-fun IconSettings(color: Color, size: Float = 24f) {
-    Canvas(modifier = Modifier.size(size.dp)) {
+fun IconSettings(color: Color, size: Float = 24f, modifier: Modifier = Modifier) {
+    Canvas(modifier = modifier.size(size.dp)) {
         val s = this.size
         val stroke = Stroke(width = s.width * 0.07f, cap = StrokeCap.Round, join = StrokeJoin.Round)
         // Gear outer
@@ -211,8 +221,8 @@ fun IconSettings(color: Color, size: Float = 24f) {
 }
 
 @Composable
-fun IconClose(color: Color, size: Float = 24f) {
-    Canvas(modifier = Modifier.size(size.dp)) {
+fun IconClose(color: Color, size: Float = 24f, modifier: Modifier = Modifier) {
+    Canvas(modifier = modifier.size(size.dp)) {
         val s = this.size
         drawLine(color, Offset(s.width * 0.25f, s.height * 0.25f), Offset(s.width * 0.75f, s.height * 0.75f), strokeWidth = s.width * 0.1f, cap = StrokeCap.Round)
         drawLine(color, Offset(s.width * 0.75f, s.height * 0.25f), Offset(s.width * 0.25f, s.height * 0.75f), strokeWidth = s.width * 0.1f, cap = StrokeCap.Round)
@@ -220,8 +230,8 @@ fun IconClose(color: Color, size: Float = 24f) {
 }
 
 @Composable
-fun IconFlash(color: Color, size: Float = 24f) {
-    Canvas(modifier = Modifier.size(size.dp)) {
+fun IconFlash(color: Color, size: Float = 24f, modifier: Modifier = Modifier) {
+    Canvas(modifier = modifier.size(size.dp)) {
         val s = this.size
         val path = Path().apply {
             moveTo(s.width * 0.6f, s.height * 0.05f)
@@ -237,8 +247,8 @@ fun IconFlash(color: Color, size: Float = 24f) {
 }
 
 @Composable
-fun IconFlip(color: Color, size: Float = 24f) {
-    Canvas(modifier = Modifier.size(size.dp)) {
+fun IconFlip(color: Color, size: Float = 24f, modifier: Modifier = Modifier) {
+    Canvas(modifier = modifier.size(size.dp)) {
         val s = this.size
         val stroke = Stroke(width = s.width * 0.08f, cap = StrokeCap.Round, join = StrokeJoin.Round)
         // Top arrow
@@ -262,8 +272,8 @@ fun IconFlip(color: Color, size: Float = 24f) {
 }
 
 @Composable
-fun IconComment(color: Color, size: Float = 24f) {
-    Canvas(modifier = Modifier.size(size.dp)) {
+fun IconComment(color: Color, size: Float = 24f, modifier: Modifier = Modifier) {
+    Canvas(modifier = modifier.size(size.dp)) {
         val s = this.size
         val stroke = Stroke(width = s.width * 0.08f, cap = StrokeCap.Round, join = StrokeJoin.Round)
         val path = Path().apply {
@@ -281,8 +291,8 @@ fun IconComment(color: Color, size: Float = 24f) {
 }
 
 @Composable
-fun IconMore(color: Color, size: Float = 24f) {
-    Canvas(modifier = Modifier.size(size.dp)) {
+fun IconMore(color: Color, size: Float = 24f, modifier: Modifier = Modifier) {
+    Canvas(modifier = modifier.size(size.dp)) {
         val s = this.size
         val r = s.width * 0.06f
         drawCircle(color, radius = r, center = Offset(s.width * 0.5f, s.height * 0.25f))

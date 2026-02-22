@@ -14,6 +14,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.material.Surface
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -31,7 +33,7 @@ class SplashScreen : Screen {
     @Composable
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
-        val scale = remember { Animatable(0.8f) }
+        val scale = remember { Animatable(0.6f) }
         val alpha = remember { Animatable(0f) }
 
         LaunchedEffect(Unit) {
@@ -45,10 +47,10 @@ class SplashScreen : Screen {
                 )
             }
             launch {
-                alpha.animateTo(1f, tween(1000, easing = FastOutSlowInEasing))
+                alpha.animateTo(1f, tween(1200, easing = FastOutSlowInEasing))
             }
 
-            delay(2500)
+            delay(2800)
             
             if (SessionManager.session.isLoggedIn) {
                 navigator.replaceAll(MainDashboardScreen())
@@ -63,15 +65,15 @@ class SplashScreen : Screen {
                 .background(Color.White),
             contentAlignment = Alignment.Center
         ) {
-            // Subtle Background Gradient element
+            // Stitch Background hint
             Box(
                 modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .offset(x = 100.dp, y = (-100).dp)
-                    .size(300.dp)
+                    .align(Alignment.BottomStart)
+                    .offset(x = (-100).dp, y = 100.dp)
+                    .size(400.dp)
                     .background(
                         brush = Brush.radialGradient(
-                            listOf(BrandBlue.copy(alpha = 0.1f), Color.Transparent)
+                            listOf(BrandPrimary.copy(alpha = 0.05f), Color.Transparent)
                         )
                     )
             )
@@ -80,71 +82,69 @@ class SplashScreen : Screen {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.scale(scale.value).alpha(alpha.value)
             ) {
-                // Branded Icon Container with Shadow-like depth
-                Box(
+                // Branded Icon Container - Clean and Minimalist
+                Surface(
                     modifier = Modifier
                         .size(120.dp)
-                        .clip(RoundedCornerShape(32.dp))
-                        .background(Color.White)
-                        .padding(8.dp),
-                    contentAlignment = Alignment.Center
+                        .shadow(12.dp, RoundedCornerShape(32.dp)),
+                    shape = RoundedCornerShape(32.dp),
+                    color = Color.White
                 ) {
-                    Image(
-                        painter = painterResource("drawable/app_icon.png"),
-                        contentDescription = "FriendLens Logo",
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .clip(RoundedCornerShape(24.dp)),
-                        contentScale = ContentScale.Crop
-                    )
+                    Box(modifier = Modifier.padding(16.dp)) {
+                        Image(
+                            painter = painterResource("drawable/app_icon.png"),
+                            contentDescription = "FriendLens Logo",
+                            modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(20.dp)),
+                            contentScale = ContentScale.Crop
+                        )
+                    }
                 }
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(28.dp))
 
                 Text(
                     text = "FriendLens",
                     style = MaterialTheme.typography.h1.copy(
-                        color = TextDark,
-                        fontSize = 36.sp,
-                        letterSpacing = (-1).sp
+                        color = TextPrimary,
+                        fontSize = 38.sp,
+                        letterSpacing = (-1.5).sp
                     )
                 )
 
                 Text(
-                    text = "MEMORIES SHARED BETTER",
+                    text = "ALL MOMENTS. ONE PLACE.",
                     style = MaterialTheme.typography.caption.copy(
-                        color = BrandPurple,
+                        color = BrandPrimary,
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 2.sp
                     )
                 )
             }
             
-            // Minimal Loader
+            // Minimal Loader using Brand Gradient
             Box(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
-                    .padding(bottom = 60.dp)
+                    .padding(bottom = 80.dp)
             ) {
                 val infiniteTransition = rememberInfiniteTransition()
+                val breathingAlpha by infiniteTransition.animateFloat(
+                    initialValue = 0.4f,
+                    targetValue = 1f,
+                    animationSpec = infiniteRepeatable(
+                        animation = tween(800, easing = FastOutSlowInEasing),
+                        repeatMode = RepeatMode.Reverse
+                    )
+                )
                 
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    BrandGradientFull.forEachIndexed { index, color ->
-                        val delay = index * 100
-                        val animatedAlpha by infiniteTransition.animateFloat(
-                            initialValue = 0.3f,
-                            targetValue = 1f,
-                            animationSpec = infiniteRepeatable(
-                                animation = tween(600, delayMillis = delay, easing = FastOutSlowInEasing),
-                                repeatMode = RepeatMode.Reverse
-                            )
-                        )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    repeat(3) { index ->
                         Box(
                             modifier = Modifier
                                 .size(8.dp)
-                                .alpha(animatedAlpha)
+                                .alpha(if (index == 1) breathingAlpha else 0.3f)
                                 .clip(CircleShape)
-                                .background(color)
+                                .background(BrandPrimary)
                         )
                     }
                 }

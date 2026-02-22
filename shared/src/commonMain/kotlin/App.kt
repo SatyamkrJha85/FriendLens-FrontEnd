@@ -10,58 +10,63 @@ import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.transitions.SlideTransition
 
-// ─── Design Tokens (matching app icon gradient) ───
-// Icon gradient: Blue → Purple → Pink → Coral → Orange
-val BrandBlue = Color(0xFF4A90FF)
-val BrandPurple = Color(0xFF8B5CF6)
-val BrandPink = Color(0xFFEC4899)
-val BrandCoral = Color(0xFFF97066)
-val BrandOrange = Color(0xFFF97316)
-
-// Gradient stops for backgrounds/buttons
-val BrandGradient = listOf(BrandBlue, BrandPurple, BrandCoral)
-val BrandGradientFull = listOf(BrandBlue, BrandPurple, BrandPink, BrandCoral, BrandOrange)
+// ─── Stitch Design Tokens ───
+// Core Brand Palette
+val BrandPrimary = Color(0xFFF2545B) // Stitch Red/Coral
+val BrandPrimaryHover = Color(0xFFD93D44)
+val BrandSecondary = Color(0xFF4285F4) // Google Blue for social
 
 // Neutrals
 val BackgroundLight = Color(0xFFFAFAFA)
 val SurfaceWhite = Color.White
-val TextDark = Color(0xFF111827) // Darker gray for better contrast
-val TextSecondary = Color(0xFF6B7280)
+val CardLight = Color.White
+val TextPrimary = Color(0xFF1F2937) // Slate 800
+val TextSecondary = Color(0xFF6B7280) // Gray 500
 val DividerColor = Color(0xFFF3F4F6)
-val CardBackground = Color(0xFFFFFFFF) // Using white for cards on light background
+val InputBorder = Color(0xFFE2E8F0)
 
 // Feature Colors
 val SuccessGreen = Color(0xFF10B981)
 val ErrorRed = Color(0xFFEF4444)
 val WarningAmber = Color(0xFFF59E0B)
+val ActiveZoom = Color(0xFFFFD60A) // Amber/Yellow for camera active
+
+// Gradients
+val BrandGradient = listOf(BrandPrimary, Color(0xFFFB7185)) // Coral to Rose
+val BrandGradientFull = listOf(
+    Color(0xFF4A90FF), // Blue
+    Color(0xFF8B5CF6), // Purple
+    Color(0xFFEC4899), // Pink
+    BrandPrimary,      // Coral
+    Color(0xFFF97316)  // Orange
+)
 
 private val FriendLensColors = lightColors(
-    primary = BrandBlue,
-    primaryVariant = BrandPurple,
-    secondary = BrandCoral,
-    secondaryVariant = BrandOrange,
+    primary = BrandPrimary,
+    primaryVariant = BrandPrimaryHover,
+    secondary = BrandSecondary,
     onPrimary = Color.White,
     background = BackgroundLight,
     surface = SurfaceWhite,
-    onBackground = TextDark,
-    onSurface = TextDark,
+    onBackground = TextPrimary,
+    onSurface = TextPrimary,
     error = ErrorRed
 )
 
 val FriendLensShapes = Shapes(
     small = RoundedCornerShape(12.dp),
-    medium = RoundedCornerShape(20.dp),
-    large = RoundedCornerShape(32.dp)
+    medium = RoundedCornerShape(16.dp), // XL in Stitch
+    large = RoundedCornerShape(24.dp)   // 2XL in Stitch
 )
 
 val FriendLensTypography = Typography(
-    h1 = TextStyle(fontWeight = FontWeight.Bold, fontSize = 32.sp, color = TextDark),
-    h2 = TextStyle(fontWeight = FontWeight.Bold, fontSize = 24.sp, color = TextDark),
-    h3 = TextStyle(fontWeight = FontWeight.Bold, fontSize = 20.sp, color = TextDark),
-    body1 = TextStyle(fontWeight = FontWeight.Normal, fontSize = 16.sp, color = TextDark),
-    body2 = TextStyle(fontWeight = FontWeight.Normal, fontSize = 14.sp, color = TextSecondary),
+    h1 = TextStyle(fontWeight = FontWeight.Bold, fontSize = 32.sp, color = TextPrimary, letterSpacing = (-0.5).sp),
+    h2 = TextStyle(fontWeight = FontWeight.Bold, fontSize = 24.sp, color = TextPrimary),
+    h3 = TextStyle(fontWeight = FontWeight.Bold, fontSize = 18.sp, color = TextPrimary),
+    body1 = TextStyle(fontWeight = FontWeight.Normal, fontSize = 16.sp, color = TextPrimary),
+    body2 = TextStyle(fontWeight = FontWeight.Medium, fontSize = 14.sp, color = TextSecondary),
     button = TextStyle(fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color.White),
-    caption = TextStyle(fontWeight = FontWeight.Medium, fontSize = 12.sp, color = TextSecondary)
+    caption = TextStyle(fontWeight = FontWeight.SemiBold, fontSize = 12.sp, color = TextSecondary, letterSpacing = 0.5.sp)
 )
 
 @Composable

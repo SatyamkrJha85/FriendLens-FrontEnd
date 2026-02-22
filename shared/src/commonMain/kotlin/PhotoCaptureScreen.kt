@@ -97,7 +97,7 @@ class PhotoCaptureScreen : Screen {
                         horizontalArrangement = Arrangement.spacedBy(24.dp)
                     ) {
                         Text("0.5", color = Color.White.copy(alpha = 0.5f), fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                        Text("1x", color = BrandBlue, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        Text("1x", color = ActiveZoom, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                         Text("3x", color = Color.White.copy(alpha = 0.5f), fontWeight = FontWeight.Bold, fontSize = 12.sp)
                     }
 
@@ -161,7 +161,7 @@ class PhotoCaptureScreen : Screen {
                                 text = mode,
                                 modifier = Modifier.clickable { selectedMode = mode },
                                 style = MaterialTheme.typography.caption.copy(
-                                    color = if (isActive) BrandCoral else Color.White.copy(alpha = 0.5f),
+                                    color = if (isActive) BrandPrimary else Color.White.copy(alpha = 0.5f),
                                     fontWeight = if (isActive) FontWeight.Bold else FontWeight.Medium,
                                     letterSpacing = 1.sp
                                 )

@@ -1,10 +1,13 @@
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -15,6 +18,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -36,41 +40,49 @@ class LoginScreen : Screen {
         val navigator = LocalNavigator.currentOrThrow
         val scope = rememberCoroutineScope()
 
-        Column(modifier = Modifier.fillMaxSize().background(Color.White)) {
-            // Header Image (matching mockup)
+        val backgroundBrush = if (MaterialTheme.colors.isLight) Color.White else Color(0xFF121212)
+
+        Box(modifier = Modifier.fillMaxSize().background(backgroundBrush)) {
+            // Background blur effect from Stitch Design
             Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(300.dp)
-            ) {
-                Image(
-                    painter = painterResource("drawable/onboarding_celebration.png"), // Using an existing relevant image
-                    contentDescription = null,
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
-                )
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(
-                            brush = Brush.verticalGradient(
-                                colors = listOf(Color.Transparent, Color.White),
-                                startY = 100f
-                            )
-                        )
-                )
-            }
+                    .offset(x = (-40).dp, y = (-40).dp)
+                    .size(256.dp)
+                    .background(BrandPrimary.copy(alpha = 0.1f), CircleShape)
+            )
 
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 32.dp),
+                    .padding(horizontal = 24.dp)
+                    .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                Spacer(modifier = Modifier.height(60.dp))
+
+                // Stitch Hero Image (4:3 Aspect Ratio)
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(4f/3f)
+                        .shadow(4.dp, MaterialTheme.shapes.medium),
+                    shape = MaterialTheme.shapes.medium,
+                    color = if (MaterialTheme.colors.isLight) Color(0xFFF8FAFC) else Color(0xFF1E1E1E)
+                ) {
+                    Image(
+                        painter = painterResource("drawable/onboarding_celebration.png"),
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(32.dp))
+
                 Text(
                     text = "FriendLens",
-                    style = MaterialTheme.typography.h1.copy(fontSize = 32.sp),
-                    modifier = Modifier.padding(bottom = 8.dp)
+                    style = MaterialTheme.typography.h1.copy(fontSize = 30.sp),
+                    modifier = Modifier.padding(bottom = 4.dp)
                 )
                 Text(
                     text = "All moments. One place.",
@@ -78,39 +90,35 @@ class LoginScreen : Screen {
                     modifier = Modifier.padding(bottom = 32.dp)
                 )
 
-                OutlinedTextField(
-                    value = email, onValueChange = { email = it },
-                    label = { Text("Email") },
-                    placeholder = { Text("you@example.com") },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = MaterialTheme.shapes.medium,
-                    singleLine = true,
-                    colors = TextFieldDefaults.outlinedTextFieldColors(
-                        focusedBorderColor = BrandBlue,
-                        unfocusedBorderColor = DividerColor
-                    )
+                // Input Fields matching Stitch py-3.5 and xl-radius
+                StitchTextField(
+                    value = email,
+                    onValueChange = { email = it },
+                    label = "Email",
+                    placeholder = "you@example.com",
+                    icon = { IconProfile(TextSecondary, 18f) }
                 )
                 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                OutlinedTextField(
-                    value = password, onValueChange = { password = it },
-                    label = { Text("Password") },
-                    visualTransformation = PasswordVisualTransformation(),
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = MaterialTheme.shapes.medium,
-                    singleLine = true,
-                    colors = TextFieldDefaults.outlinedTextFieldColors(
-                        focusedBorderColor = BrandBlue,
-                        unfocusedBorderColor = DividerColor
-                    )
+                StitchTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    label = "Password",
+                    placeholder = "••••••••",
+                    isPassword = true,
+                    icon = { IconSettings(TextSecondary, 18f) }
                 )
 
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
                     horizontalArrangement = Arrangement.End
                 ) {
-                    Text("Forgot Password?", style = MaterialTheme.typography.caption.copy(color = BrandCoral))
+                    Text(
+                        "Forgot Password?",
+                        style = MaterialTheme.typography.caption.copy(color = BrandPrimary),
+                        modifier = Modifier.clickable { }
+                    )
                 }
 
                 if (errorMsg != null) {
@@ -119,6 +127,7 @@ class LoginScreen : Screen {
 
                 Spacer(modifier = Modifier.height(32.dp))
 
+                // Primary Action Button - Solid Stitch Primary
                 Button(
                     onClick = {
                         if (email.isBlank() || password.isBlank()) {
@@ -133,18 +142,14 @@ class LoginScreen : Screen {
                                 if (authResp.access_token != null) {
                                     FriendLensApi.authToken = authResp.access_token
                                     val userResp = FriendLensApi.getCurrentUser()
-                                    if (userResp.status == "success") {
-                                        SessionManager.login(
-                                            token = authResp.access_token,
-                                            userId = userResp.userId ?: authResp.user?.id ?: "",
-                                            email = userResp.email ?: email,
-                                            username = userResp.username,
-                                            avatarUrl = userResp.avatarUrl
-                                        )
-                                        navigator.replaceAll(MainDashboardScreen())
-                                    } else {
-                                        errorMsg = "Sync failed. Try again."
-                                    }
+                                    SessionManager.login(
+                                        token = authResp.access_token,
+                                        userId = userResp.userId ?: authResp.user?.id ?: "",
+                                        email = userResp.email ?: email,
+                                        username = userResp.username,
+                                        avatarUrl = userResp.avatarUrl
+                                    )
+                                    navigator.replaceAll(MainDashboardScreen())
                                 } else {
                                     errorMsg = authResp.error_description ?: "Invalid login"
                                 }
@@ -155,40 +160,23 @@ class LoginScreen : Screen {
                             }
                         }
                     },
-                    modifier = Modifier.fillMaxWidth().height(56.dp).shadow(8.dp, CircleShape),
-                    shape = CircleShape,
-                    colors = ButtonDefaults.buttonColors(backgroundColor = Color.Transparent),
-                    contentPadding = PaddingValues(0.dp),
+                    modifier = Modifier.fillMaxWidth().height(56.dp).shadow(8.dp, MaterialTheme.shapes.medium),
+                    shape = MaterialTheme.shapes.medium,
+                    colors = ButtonDefaults.buttonColors(backgroundColor = BrandPrimary),
                     enabled = !isLoading
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(brush = Brush.linearGradient(listOf(BrandCoral, BrandPink))),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        if (isLoading) CircularProgressIndicator(color = Color.White, modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
-                        else Text("Sign In", style = MaterialTheme.typography.button)
-                    }
+                    if (isLoading) CircularProgressIndicator(color = Color.White, modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                    else Text("Sign In", style = MaterialTheme.typography.button)
                 }
 
-                Spacer(modifier = Modifier.height(24.dp))
-                Text("OR CONTINUE WITH", style = MaterialTheme.typography.caption.copy(letterSpacing = 1.sp))
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Social Icons matching mockup
-                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    SocialButton("drawable/onboarding_celebration.png") // Placeholder for Google
-                    SocialButton("drawable/onboarding_capture.png") // Placeholder for Apple
-                }
-
-                Spacer(modifier = Modifier.height(32.dp))
-                Row {
+                Spacer(modifier = Modifier.height(40.dp))
+                
+                Row(modifier = Modifier.padding(bottom = 40.dp)) {
                     Text("Don't have an account? ", style = MaterialTheme.typography.body2)
                     Text(
                         "Sign Up",
                         modifier = Modifier.clickable { navigator.push(SignupScreen()) },
-                        style = MaterialTheme.typography.body2.copy(color = BrandCoral, fontWeight = FontWeight.Bold)
+                        style = MaterialTheme.typography.body2.copy(color = BrandPrimary, fontWeight = FontWeight.Bold)
                     )
                 }
             }
@@ -196,18 +184,32 @@ class LoginScreen : Screen {
     }
 
     @Composable
-    fun SocialButton(iconRes: String) {
-        Surface(
-            modifier = Modifier.size(48.dp),
-            shape = CircleShape,
-            color = Color.White,
-            border = BorderStroke(1.dp, DividerColor),
-            elevation = 2.dp
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                // In a real app we'd use social icons, here placeholders
-                Box(Modifier.size(20.dp).background(Color(0xFFEEEEEE), CircleShape))
-            }
+    fun StitchTextField(
+        value: String,
+        onValueChange: (String) -> Unit,
+        label: String,
+        placeholder: String,
+        icon: @Composable () -> Unit,
+        isPassword: Boolean = false
+    ) {
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Text(label, style = MaterialTheme.typography.caption.copy(fontWeight = FontWeight.Bold, color = TextPrimary), modifier = Modifier.padding(start = 4.dp, bottom = 6.dp))
+            OutlinedTextField(
+                value = value,
+                onValueChange = onValueChange,
+                modifier = Modifier.fillMaxWidth(),
+                placeholder = { Text(placeholder, style = MaterialTheme.typography.body1.copy(color = TextSecondary.copy(alpha = 0.5f))) },
+                leadingIcon = { Box(modifier = Modifier.padding(start = 12.dp)) { icon() } },
+                shape = MaterialTheme.shapes.medium,
+                singleLine = true,
+                visualTransformation = if (isPassword) PasswordVisualTransformation() else VisualTransformation.None,
+                colors = TextFieldDefaults.outlinedTextFieldColors(
+                    backgroundColor = if (MaterialTheme.colors.isLight) Color(0xFFF8FAFC) else Color(0xFF1E1E1E),
+                    unfocusedBorderColor = InputBorder,
+                    focusedBorderColor = BrandPrimary,
+                    textColor = TextPrimary
+                )
+            )
         }
     }
 }
@@ -223,15 +225,13 @@ class SignupScreen : Screen {
         val navigator = LocalNavigator.currentOrThrow
         val scope = rememberCoroutineScope()
 
-        Column(modifier = Modifier.fillMaxSize().background(Color.White)) {
-            Box(
-                modifier = Modifier.fillMaxWidth().padding(top = 48.dp, start = 24.dp)
-            ) {
-                IconButton(onClick = { navigator.pop() }) { IconBack(TextDark, 24f) }
+        Column(modifier = Modifier.fillMaxSize().background(Color.White).verticalScroll(rememberScrollState())) {
+            Box(modifier = Modifier.fillMaxWidth().padding(top = 48.dp, start = 24.dp)) {
+                IconButton(onClick = { navigator.pop() }) { IconBack(TextPrimary, 24f) }
             }
 
             Column(
-                modifier = Modifier.fillMaxSize().padding(horizontal = 32.dp),
+                modifier = Modifier.fillMaxSize().padding(horizontal = 24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text("Create Account", style = MaterialTheme.typography.h1)
@@ -239,32 +239,11 @@ class SignupScreen : Screen {
                 
                 Spacer(modifier = Modifier.height(48.dp))
 
-                OutlinedTextField(
-                    value = username, onValueChange = { username = it },
-                    label = { Text("Display Name") },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = MaterialTheme.shapes.medium,
-                    colors = TextFieldDefaults.outlinedTextFieldColors(focusedBorderColor = BrandPurple, backgroundColor = Color.White)
-                )
+                StitchTextField(username, { username = it }, "Display Name", "Alex Morgan", { IconProfile(TextSecondary, 18f) })
                 Spacer(modifier = Modifier.height(16.dp))
-
-                OutlinedTextField(
-                    value = email, onValueChange = { email = it },
-                    label = { Text("Email Address") },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = MaterialTheme.shapes.medium,
-                    colors = TextFieldDefaults.outlinedTextFieldColors(focusedBorderColor = BrandPurple, backgroundColor = Color.White)
-                )
+                StitchTextField(email, { email = it }, "Email Address", "you@example.com", { IconGroup(TextSecondary, 18f) })
                 Spacer(modifier = Modifier.height(16.dp))
-
-                OutlinedTextField(
-                    value = password, onValueChange = { password = it },
-                    label = { Text("Password") },
-                    visualTransformation = PasswordVisualTransformation(),
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = MaterialTheme.shapes.medium,
-                    colors = TextFieldDefaults.outlinedTextFieldColors(focusedBorderColor = BrandPurple, backgroundColor = Color.White)
-                )
+                StitchTextField(password, { password = it }, "Password", "••••••••", { IconSettings(TextSecondary, 18f) }, true)
 
                 if (errorMsg != null) {
                     Spacer(modifier = Modifier.height(12.dp))
@@ -309,21 +288,40 @@ class SignupScreen : Screen {
                             }
                         }
                     },
-                    modifier = Modifier.fillMaxWidth().height(60.dp).shadow(12.dp, CircleShape),
-                    shape = CircleShape,
-                    colors = ButtonDefaults.buttonColors(backgroundColor = Color.Transparent),
-                    contentPadding = PaddingValues(0.dp),
+                    modifier = Modifier.fillMaxWidth().height(56.dp).shadow(8.dp, MaterialTheme.shapes.medium),
+                    shape = MaterialTheme.shapes.medium,
+                    colors = ButtonDefaults.buttonColors(backgroundColor = BrandPrimary),
                     enabled = !isLoading
                 ) {
-                    Box(
-                        modifier = Modifier.fillMaxSize().background(brush = Brush.linearGradient(listOf(BrandBlue, BrandPurple))),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        if (isLoading) CircularProgressIndicator(color = Color.White, modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
-                        else Text("Get Started", style = MaterialTheme.typography.button)
-                    }
+                    if (isLoading) CircularProgressIndicator(color = Color.White, modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                    else Text("Get Started", style = MaterialTheme.typography.button)
                 }
+
+                Spacer(modifier = Modifier.height(40.dp))
             }
+        }
+    }
+
+    @Composable
+    private fun StitchTextField(value: String, onValueChange: (String) -> Unit, label: String, placeholder: String, icon: @Composable () -> Unit, isPassword: Boolean = false) {
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Text(label, style = MaterialTheme.typography.caption.copy(fontWeight = FontWeight.Bold, color = TextPrimary), modifier = Modifier.padding(start = 4.dp, bottom = 6.dp))
+            OutlinedTextField(
+                value = value,
+                onValueChange = onValueChange,
+                modifier = Modifier.fillMaxWidth(),
+                placeholder = { Text(placeholder, style = MaterialTheme.typography.body1.copy(color = TextSecondary.copy(alpha = 0.5f))) },
+                leadingIcon = { Box(modifier = Modifier.padding(start = 12.dp)) { icon() } },
+                shape = MaterialTheme.shapes.medium,
+                singleLine = true,
+                visualTransformation = if (isPassword) PasswordVisualTransformation() else VisualTransformation.None,
+                colors = TextFieldDefaults.outlinedTextFieldColors(
+                    backgroundColor = Color(0xFFF8FAFC),
+                    unfocusedBorderColor = InputBorder,
+                    focusedBorderColor = BrandPrimary,
+                    textColor = TextPrimary
+                )
+            )
         }
     }
 }
