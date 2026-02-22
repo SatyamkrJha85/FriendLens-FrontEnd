@@ -32,7 +32,7 @@ class CreateJoinGroupScreen : Screen {
         var joinCode by remember { mutableStateOf("") }
         var groupName by remember { mutableStateOf("") }
         var groupDesc by remember { mutableStateOf("") }
-        var groupImg by remember { mutableStateOf("") }
+        var groupImgBytes by remember { mutableStateOf<ByteArray?>(null) }
         var isLoading by remember { mutableStateOf(false) }
         var error by remember { mutableStateOf<String?>(null) }
         val scope = rememberCoroutineScope()
@@ -196,15 +196,24 @@ class CreateJoinGroupScreen : Screen {
 
                     Spacer(Modifier.height(16.dp))
 
-                    LabelStyle("COVER IMAGE URL")
-                    OutlinedTextField(
-                        value = groupImg,
-                        onValueChange = { groupImg = it },
-                        modifier = Modifier.fillMaxWidth(),
-                        placeholder = { Text("https://image.path/to/cover.jpg", style = MaterialTheme.typography.body1.copy(color = TextSecondary.copy(0.4f))) },
+                    val pickImage = rememberImagePicker { bytes ->
+                        groupImgBytes = bytes
+                    }
+
+                    LabelStyle("COVER IMAGE")
+                    Button(
+                        onClick = { pickImage() },
+                        modifier = Modifier.fillMaxWidth().height(56.dp),
                         shape = RoundedCornerShape(16.dp),
-                        singleLine = true
-                    )
+                        colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFFF3F4F6)),
+                        elevation = ButtonDefaults.elevation(0.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            IconCamera(BrandPrimary, 20f)
+                            Spacer(Modifier.width(12.dp))
+                            Text(if (groupImgBytes != null) "Image Selected! (${groupImgBytes!!.size / 1024} KB)" else "Select from Gallery", color = TextPrimary)
+                        }
+                    }
                     
                     Spacer(Modifier.height(24.dp))
                     
@@ -217,7 +226,7 @@ class CreateJoinGroupScreen : Screen {
                                 try {
                                     // In a real app, we'd need to update the backend to accept groupImg in createGroup
                                     // For now we use the existing API call
-                                    val resp = FriendLensApi.createGroup(CreateGroupRequest(name = groupName, description = groupDesc, groupImg = groupImg))
+                                    val resp = FriendLensApi.createGroupWithImage(name = groupName, description = groupDesc, imageBytes = groupImgBytes)
                                     if (resp.status == "success") {
                                         DataCache.clear() // Invalidate cache
                                         navigator.replaceAll(MainDashboardScreen())

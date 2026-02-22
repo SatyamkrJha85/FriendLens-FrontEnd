@@ -7,7 +7,13 @@ import io.ktor.client.request.forms.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
+import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
+import io.github.jan.supabase.SupabaseClient
+import io.github.jan.supabase.createSupabaseClient
+import io.github.jan.supabase.gotrue.Auth
+import io.github.jan.supabase.gotrue.auth
+import io.github.jan.supabase.gotrue.providers.builtin.Email
 
 object FriendLensApi {
     private const val BACKEND_URL = "https://friendlens-backend.onrender.com"
@@ -34,25 +40,55 @@ object FriendLensApi {
         authToken?.let { header(HttpHeaders.Authorization, "Bearer $it") }
     }
 
-    private fun HttpRequestBuilder.supabase() {
-        header("apikey", SUPABASE_ANON_KEY)
+    val supabase = createSupabaseClient(
+        supabaseUrl = SUPABASE_URL,
+        supabaseKey = SUPABASE_ANON_KEY
+    ) {
+        install(Auth)
     }
 
     // ─── Auth (Direct to Supabase) ───
     suspend fun login(request: LoginRequest): AuthResponse {
-        return client.post("$SUPABASE_URL/auth/v1/token?grant_type=password") {
-            supabase()
-            contentType(ContentType.Application.Json)
-            setBody(request)
-        }.body()
+        return try {
+            supabase.auth.signInWith(Email) {
+                email = request.email
+                password = request.password
+            }
+            val session = supabase.auth.currentSessionOrNull()
+            if (session != null) {
+                authToken = session.accessToken
+                AuthResponse(access_token = session.accessToken, user = SupabaseUser(id = session.user?.id ?: ""))
+            } else {
+                AuthResponse(error_description = "Invalid login")
+            }
+        } catch (e: Exception) {
+            AuthResponse(error_description = e.message ?: "Invalid login")
+        }
     }
 
     suspend fun signup(request: SignupRequest): AuthResponse {
-        return client.post("$SUPABASE_URL/auth/v1/signup") {
-            supabase()
-            contentType(ContentType.Application.Json)
-            setBody(request)
-        }.body()
+        return try {
+            supabase.auth.signUpWith(Email) {
+                email = request.email
+                password = request.password
+            }
+            val session = supabase.auth.currentSessionOrNull()
+            if (session != null) {
+                authToken = session.accessToken
+                AuthResponse(access_token = session.accessToken, user = SupabaseUser(id = session.user?.id ?: ""))
+            } else {
+                AuthResponse(msg = "Signup successful. Check email.", user = SupabaseUser(id = "")) 
+            }
+        } catch (e: Exception) {
+            AuthResponse(error_description = e.message ?: "Signup failed")
+        }
+    }
+
+    suspend fun logout() {
+        try {
+            supabase.auth.signOut()
+        } catch (e: Exception) {}
+        authToken = null
     }
 
     // ─── User (To FriendLens Ktor Backend) ───
@@ -76,6 +112,23 @@ object FriendLensApi {
             setBody(request)
         }.body()
     }
+
+    suspend fun createGroupWithImage(name: String, description: String, imageBytes: ByteArray?): CreateGroupResponse {
+        return client.submitFormWithBinaryData(
+            url = "$BACKEND_URL/api/groups",
+            formData = formData {
+                append("name", name)
+                append("description", description)
+                if (imageBytes != null) {
+                    append("image", imageBytes, Headers.build {
+                        append(HttpHeaders.ContentType, "image/jpeg")
+                        append(HttpHeaders.ContentDisposition, "filename=\"groupImg.jpg\"")
+                    })
+                }
+            }
+        ) { auth() }.body()
+    }
+
 
     suspend fun getAllGroups(): GroupsResponse {
         return client.get("$BACKEND_URL/api/groups") { auth() }.body()

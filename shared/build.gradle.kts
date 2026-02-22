@@ -39,6 +39,8 @@ kotlin {
                 
                 implementation("com.russhwolf:multiplatform-settings:1.1.1")
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0")
+                
+                implementation("io.github.jan-tennert.supabase:gotrue-kt:2.5.0")
             }
         }
         val androidMain by getting {

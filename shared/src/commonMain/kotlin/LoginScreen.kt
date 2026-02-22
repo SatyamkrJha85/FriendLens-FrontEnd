@@ -277,6 +277,8 @@ class SignupScreen : Screen {
                                             avatarUrl = userResp.avatarUrl
                                         )
                                         navigator.replaceAll(MainDashboardScreen())
+                                    } else {
+                                        errorMsg = authResp.error_description ?: "Signup successful. Please check your email to confirm."
                                     }
                                 } else {
                                     errorMsg = signupResp.error_description ?: "Signup failed"

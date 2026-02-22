@@ -22,10 +22,12 @@ import org.jetbrains.compose.resources.painterResource
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.ui.text.style.TextAlign
+import cafe.adriel.voyager.navigator.currentOrThrow
 
 @OptIn(ExperimentalResourceApi::class)
 @Composable
 fun ProfileTab() {
+    val navigator = cafe.adriel.voyager.navigator.LocalNavigator.currentOrThrow
     var userProfile by remember { mutableStateOf(DataCache.user) }
     var isLoading by remember { mutableStateOf(userProfile == null) }
     val scope = rememberCoroutineScope()
@@ -226,8 +228,12 @@ fun ProfileTab() {
                         .fillMaxWidth()
                         .padding(horizontal = 24.dp)
                         .clickable { 
-                            DataCache.clear()
-                            SessionManager.logout() 
+                            scope.launch {
+                                FriendLensApi.logout()
+                                DataCache.clear()
+                                SessionManager.logout() 
+                                navigator.replaceAll(LoginScreen())
+                            }
                         },
                     shape = RoundedCornerShape(20.dp),
                     color = Color(0xFFFEF2F2),
